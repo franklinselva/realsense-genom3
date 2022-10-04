@@ -67,10 +67,13 @@ rs_viz_start(realsense_ids *ids,
     ids->v_data = new or_camera_data();
     ids->i_data = new or_camera_data();
 
-    // ids->undist = new realsense_undist_s();
-    // ids->info.compression_rate = -1;
-    // ids->info.frequency = 30;
-    //
+    ids->undist = new realsense_undist_s();
+    ids->info.compression_rate = -1;
+    ids->info.frequency = 30;
+    snprintf(ids->info.format, sizeof(ids->info.format), "RGB8");
+    ids->info.size = {1280, 720};
+    ids->info.compression_rate = -1;
+
     // frame->open("t265/1/raw", self);
     // frame->open("t265/1/compressed", self);
     // frame->open("t265/2/raw", self);

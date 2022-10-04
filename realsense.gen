@@ -136,10 +136,10 @@ component realsense {
                                  in boolean infrared = FALSE,
                                  in boolean accelerometer = FALSE,
                                  in boolean gyroscope = FALSE) {
-        codel enable_streams_d435(in color, in depth, in infrared, in accelerometer, in gyroscope, inout pipe);
+        codel enable_streams_d435(in info, in color, in depth, in infrared, in accelerometer, in gyroscope, inout pipe);
     };
 
-    /* ---- Control setters ----------------------------------------------- */
+    /* ---- Camera setting ------------------------------------------------ */
     attribute set_compression(in info.compression_rate = -1 : "Image JPEG compression (0-100); -1 to disable.") {
         throw e_io;
         validate set_compression_rate(local in compression_rate);
@@ -154,11 +154,20 @@ component realsense {
             yield ether;
     };
 
-    // activity enable_camera() {
-    //     throw e_io;
-    // };
+    attribute set_format(in info.format = "RGB8" : "Pixel format (YUYV, RGB8, RGBA8, BGR8, BGRA8, Y16)") {
+        throw e_io;
+        validate set_format(local in format);
+    };
+    attribute set_fps(in info.frequency = 30 : "Camera frequency (6, 15, 30, 60)") {
+        throw e_io;
+        validate set_fps(local in frequency, in info.size.w);
+    };
+    attribute set_size(in info.size = {1280, 720} : "Video size (1920x1080, 1280x720, 960x540, 848x480, 640x480, 640x360, 424x240, 320x240)") {
+        throw e_io;
+        validate set_size(local in size);
+    };
 
-    /* ---- Calibration --------------------------------------------------- */
+    /* ---- Extrinsics ---------------------------------------------------- */
     activity set_extrinsics(in sequence<float,6> ext_values) {
         task visual;
 

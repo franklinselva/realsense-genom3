@@ -383,6 +383,62 @@ a|.Context
 
 '''
 
+[[set_format]]
+=== set_format (attribute)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `string<8>` `format` (default `"RGB8"`) Pixel format (YUYV, RGB8, RGBA8, BGR8, BGRA8, Y16)
+
+a|.Throws
+[disc]
+ * `exception ::realsense::e_io`
+ ** `string<128>` `what`
+
+|===
+
+'''
+
+[[set_fps]]
+=== set_fps (attribute)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `unsigned short` `frequency` (default `"30"`) Camera frequency (6, 15, 30, 60)
+
+a|.Throws
+[disc]
+ * `exception ::realsense::e_io`
+ ** `string<128>` `what`
+
+|===
+
+'''
+
+[[set_size]]
+=== set_size (attribute)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `struct ::or_camera::info::size_s` `size`: Video size (1920x1080, 1280x720, 960x540, 848x480, 640x480, 640x360, 424x240, 320x240)
+ ** `unsigned short` `w` (default `"1280"`)
+ ** `unsigned short` `h` (default `"720"`)
+
+a|.Throws
+[disc]
+ * `exception ::realsense::e_io`
+ ** `string<128>` `what`
+
+|===
+
+'''
+
 [[set_extrinsics]]
 === set_extrinsics (activity)
 
