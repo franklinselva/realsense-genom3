@@ -61,6 +61,7 @@ void realsense::camera::clear_streams()
 {
     _stream_desired.clear();
     _nb_depth_streams = 0;
+    _intr = rs2_intrinsics();
 }
 
 void realsense::camera::start()
@@ -80,6 +81,8 @@ void realsense::camera::start()
                     sp.as<rs2::video_stream_profile>().height() == stream_d.h)))
                 {
                     enabled.push_back(sp);
+                    if (sp.stream_type() == RS2_STREAM_COLOR || sp.stream_type() == RS2_STREAM_FISHEYE)
+                        _intr = sp.as<rs2::video_stream_profile>().get_intrinsics();
                 }
             }
         }

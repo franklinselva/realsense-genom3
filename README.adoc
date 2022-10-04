@@ -411,6 +411,7 @@ a|.Context
 [disc]
   * Free running
 * Updates port `<<frame>>`
+* Updates port `<<intrinsics>>`
 * Updates port `<<extrinsics>>`
 |===
 

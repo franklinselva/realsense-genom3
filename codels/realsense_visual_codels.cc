@@ -47,10 +47,16 @@ using namespace cv;
 genom_event
 rs_viz_start(realsense_ids *ids,
              const realsense_extrinsics *extrinsics,
+             const realsense_intrinsics *intrinsics,
              const realsense_frame *frame, const genom_context self)
 {
     *extrinsics->data(self) = {0,0,0,0,0,0};
     extrinsics->write(self);
+    *intrinsics->data(self) = {
+        .calib = {0, 0, 0, 0, 0},
+        .disto = {0, 0, 0, 0, 0},
+    };
+    intrinsics->write(self);
 
     ids->pipe = new or_camera_pipe();
     ids->v_sync = new realsense_sync_s();
@@ -199,8 +205,10 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
            const realsense_intrinsics *intrinsics,
            const genom_context self)
 {
+    // Stop current connexion
     (*pipe)->cam->stop();
 
+    // Find device in list (default or by serial)
     rs2::context ctx;
     rs2::device_list devices = ctx.query_devices();
 
@@ -243,7 +251,31 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
         sn = device_des.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
     warnx("Connecting to device: %s #%s", name.c_str(), sn.c_str());
 
+    // Start all desired streams
     (*pipe)->cam->start();
+
+    // Init intrinsics port if COLOR or FISHEYE is enabled
+    rs2_intrinsics* intr = &(*pipe)->cam->_intr;
+    if (intr->width != 0)
+    {
+        *intrinsics->data(self) = {
+            .calib = {
+                intr->fx,
+                intr->fy,
+                intr->ppx,
+                intr->ppy,
+                0,
+            },
+            .disto = {
+                intr->coeffs[0],
+                intr->coeffs[1],
+                intr->coeffs[2],
+                intr->coeffs[3],
+                intr->coeffs[4],
+            },
+        };
+        intrinsics->write(self);
+    }
 
     *started = true;
 
