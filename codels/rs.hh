@@ -74,6 +74,7 @@ namespace realsense
 
         void add_stream(realsense::stream s);
         void rm_stream(realsense::stream s);
+        void clear_streams();
 
         void start();
         void stop();

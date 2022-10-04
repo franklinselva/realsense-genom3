@@ -88,6 +88,9 @@ component realsense {
         undist_s undist;    // undistortion parameters
     };
 
+    /* ---- Constants ----------------------------------------------------- */
+    const unsigned short poll_duration_sec = 1; // duration of each poll before releasing mutex
+
     /* ---- Tasks --------------------------------------------------------- */
     task visual {
         codel<start> rs_viz_start(out ::ids, out extrinsics, out frame)
@@ -97,7 +100,7 @@ component realsense {
             yield pause::sleep, poll;
 
         async codel<poll> rs_viz_poll(inout v_sync, out v_data)
-            yield pause::poll, poll, main;
+            yield sleep, main;
 
         codel<main> rs_viz_main(in info.compression_rate, in v_data, in undist, out frame)
             yield sleep;
@@ -111,7 +114,7 @@ component realsense {
             yield pause::sleep, poll;
 
             async codel<poll> rs_inertial_poll(inout i_sync, out i_data)
-                yield pause::poll, poll, main;
+                yield sleep, main;
 
         codel<main> rs_inertial_main(in info.compression_rate, in i_data, in undist, out frame)
             yield sleep;
@@ -135,13 +138,28 @@ component realsense {
             yield ether;
     };
 
+    function enable_streams_t265(in boolean fisheye = FALSE,
+                                 in boolean odometry = FALSE,
+                                 in boolean accelerometer = FALSE,
+                                 in boolean gyroscope = FALSE) {
+        codel enable_streams_t265(in fisheye, in odometry, in accelerometer, in gyroscope, inout pipe);
+    };
+
+    function enable_streams_d435(in boolean color = FALSE,
+                                 in boolean depth = FALSE,
+                                 in boolean infrared = FALSE,
+                                 in boolean accelerometer = FALSE,
+                                 in boolean gyroscope = FALSE) {
+        codel enable_streams_d435(in color, in depth, in infrared, in accelerometer, in gyroscope, inout pipe);
+    };
+
     /* ---- Control setters ----------------------------------------------- */
     attribute set_compression(in info.compression_rate = -1 : "Image JPEG compression (0-100); -1 to disable.") {
         throw e_io;
         validate set_compression_rate(local in compression_rate);
     };
 
-    activity set_undistortion(in unsigned short size = 500 : "pixel size of the desired undistorted image",
+    activity set_undistortion(in unsigned short size = 500 : "Pixel size of the desired undistorted image",
                               in float fov = 2 : "Field of view of the undistorted image in radian") {
         task visual;
         throw e_io;

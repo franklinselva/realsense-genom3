@@ -57,6 +57,12 @@ void realsense::camera::rm_stream(realsense::stream s)
     // TODO
 }
 
+void realsense::camera::clear_streams()
+{
+    _stream_desired.clear();
+    _nb_depth_streams = 0;
+}
+
 void realsense::camera::start()
 {
     for (rs2::sensor s : _sensors)
@@ -91,8 +97,11 @@ void realsense::camera::stop()
 {
     for (rs2::sensor s : _sensors)
     {
-        s.stop();
-        s.close();
+        try {
+            s.stop();
+            s.close();
+        }
+        catch (rs2::error& e) {} // catch exception for sensor not opened/streaming
     }
     _sensors.clear();
 }

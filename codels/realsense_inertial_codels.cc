@@ -69,7 +69,7 @@ rs_inertial_sleep(bool started, const genom_context self)
 /** Codel rs_inertial_poll of task inertial.
  *
  * Triggered by realsense_poll.
- * Yields to realsense_pause_poll, realsense_poll, realsense_main.
+ * Yields to realsense_sleep, realsense_main.
  */
 genom_event
 rs_inertial_poll(realsense_sync_s **i_sync, or_camera_data **i_data,
@@ -77,7 +77,10 @@ rs_inertial_poll(realsense_sync_s **i_sync, or_camera_data **i_data,
 {
     std::unique_lock<std::mutex> lock((*i_sync)->_sync->m);
 
-    (*i_sync)->_sync->cv.wait(lock);
+    (*i_sync)->_sync->cv.wait_for(lock, std::chrono::duration<int16_t>(realsense_poll_duration_sec));
+
+    if ((*i_sync)->_sync->frames.size() == 0)
+        return realsense_sleep;
 
     (*i_data)->_data = (*i_sync)->_sync->frames;
     (*i_sync)->_sync->frames.clear();

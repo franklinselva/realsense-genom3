@@ -301,6 +301,46 @@ a|.Context
 
 '''
 
+[[enable_streams_t265]]
+=== enable_streams_t265 (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `boolean` `fisheye` (default `"0"`)
+
+ * `boolean` `odometry` (default `"0"`)
+
+ * `boolean` `accelerometer` (default `"0"`)
+
+ * `boolean` `gyroscope` (default `"0"`)
+
+|===
+
+'''
+
+[[enable_streams_d435]]
+=== enable_streams_d435 (function)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `boolean` `color` (default `"0"`)
+
+ * `boolean` `depth` (default `"0"`)
+
+ * `boolean` `infrared` (default `"0"`)
+
+ * `boolean` `accelerometer` (default `"0"`)
+
+ * `boolean` `gyroscope` (default `"0"`)
+
+|===
+
+'''
+
 [[set_compression]]
 === set_compression (attribute)
 
@@ -326,7 +366,7 @@ a|.Throws
 |===
 a|.Inputs
 [disc]
- * `unsigned short` `size` (default `"500"`) pixel size of the desired undistorted image
+ * `unsigned short` `size` (default `"500"`) Pixel size of the desired undistorted image
 
  * `float` `fov` (default `"2"`) Field of view of the undistorted image in radian
 

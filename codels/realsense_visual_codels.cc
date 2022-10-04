@@ -97,7 +97,7 @@ rs_viz_sleep(bool started, const genom_context self)
 /** Codel rs_viz_poll of task visual.
  *
  * Triggered by realsense_poll.
- * Yields to realsense_pause_poll, realsense_poll, realsense_main.
+ * Yields to realsense_sleep, realsense_main.
  */
 genom_event
 rs_viz_poll(realsense_sync_s **v_sync, or_camera_data **v_data,
@@ -105,7 +105,10 @@ rs_viz_poll(realsense_sync_s **v_sync, or_camera_data **v_data,
 {
     std::unique_lock<std::mutex> lock((*v_sync)->_sync->m);
 
-    (*v_sync)->_sync->cv.wait(lock);
+    (*v_sync)->_sync->cv.wait_for(lock, std::chrono::duration<int16_t>(realsense_poll_duration_sec));
+
+    if ((*v_sync)->_sync->frames.size() == 0)
+        return realsense_sleep;
 
     (*v_data)->_data = (*v_sync)->_sync->frames;
     (*v_sync)->_sync->frames.clear();
@@ -196,6 +199,8 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
            const realsense_intrinsics *intrinsics,
            const genom_context self)
 {
+    (*pipe)->cam->stop();
+
     rs2::context ctx;
     rs2::device_list devices = ctx.query_devices();
 
@@ -238,26 +243,9 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
         sn = device_des.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
     warnx("Connecting to device: %s #%s", name.c_str(), sn.c_str());
 
-    *started = true;
-
-    // TMP enable streams manually here
-    realsense::stream fe {RS2_STREAM_FISHEYE, RS2_FORMAT_Y8, 30, 848, 800};
-    realsense::stream pose {RS2_STREAM_POSE, RS2_FORMAT_6DOF, 200, 0, 0};
-    // realsense::stream accel {RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 62, 0,0};
-    // realsense::stream gyro {RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F, 200, 0,0};
-    // realsense::stream accel {RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 63, 0,0};
-    realsense::stream depth {RS2_STREAM_DEPTH, RS2_FORMAT_Z16, 300, 848, 100};
-    realsense::stream ir {RS2_STREAM_INFRARED, RS2_FORMAT_Y8, 300, 848, 100};
-    realsense::stream color {RS2_STREAM_COLOR, RS2_FORMAT_RGB8, 30, 1280, 720};
-
-    (*pipe)->cam->add_stream(fe);
-    (*pipe)->cam->add_stream(pose);
-    // (*pipe)->cam->add_stream(accel);
-    // (*pipe)->cam->add_stream(gyro);
-    (*pipe)->cam->add_stream(color);
-    (*pipe)->cam->add_stream(depth);
-    (*pipe)->cam->add_stream(ir);
     (*pipe)->cam->start();
+
+    *started = true;
 
     return realsense_ether;
 }
@@ -275,14 +263,7 @@ genom_event
 rs_disconnect(or_camera_pipe **pipe, bool *started,
               const genom_context self)
 {
-    try {
-        (*pipe)->cam->stop();
-    } catch (rs2::error& e) {
-        realsense_e_rs_detail d;
-        snprintf(d.what, sizeof(d.what), "%s", e.what());
-        warnx("rs error: %s", d.what);
-        return realsense_e_rs(&d,self);
-    }
+    (*pipe)->cam->stop();
     *started = false;
 
     warnx("disconnected from device");
