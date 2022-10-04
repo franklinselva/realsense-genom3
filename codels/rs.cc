@@ -46,6 +46,10 @@ void realsense::camera::init(rs2::device dev)
 void realsense::camera::add_stream(realsense::stream s)
 {
     _stream_desired.push_back(s);
+    if (s.type == RS2_STREAM_DEPTH)
+        _nb_depth_streams++;
+    if (s.type == RS2_STREAM_INFRARED)
+        _nb_depth_streams += 2;
 }
 
 void realsense::camera::rm_stream(realsense::stream s)
@@ -96,21 +100,48 @@ void realsense::camera::stop()
 // Callback function
 void realsense::camera::_callback(rs2::frame f)
 {
-    rs2::stream_profile sp = f.get_profile();
-    if (sp.stream_type() == RS2_STREAM_FISHEYE ||
-        sp.stream_type() == RS2_STREAM_COLOR)
+    if (f.is<rs2::video_frame>())
     {
         std::unique_lock<std::mutex> lock(v_sync.m);
-        v_sync.frame = f;
-        lock.unlock();
-        v_sync.cv.notify_all();
+
+        // check stream type and fill struct accordingly
+        rs2_stream st = f.get_profile().stream_type();
+        // color stream is composed of a single frame; retrieve it and notify
+        if (st == RS2_STREAM_COLOR)
+        {
+            v_sync.frames.push_back(f);
+            lock.unlock();
+            v_sync.cv.notify_all();
+        }
+        // enqueue FE frames and notify when both are retrieved
+        else if (st == RS2_STREAM_FISHEYE)
+        {
+            _queue.push_back(f);
+            if (_queue.size() == 2)
+            {
+                v_sync.frames = _queue;
+                _queue.clear();
+                lock.unlock();
+                v_sync.cv.notify_all();
+            }
+        }
+        // enqueue depth stream until all are retrieved (depending on enabled streams)
+        else if (st == RS2_STREAM_DEPTH || st == RS2_STREAM_INFRARED)
+        {
+            _queue.push_back(f);
+            if (_queue.size() == _nb_depth_streams)
+            {
+                v_sync.frames = _queue;
+                _queue.clear();
+                lock.unlock();
+                v_sync.cv.notify_all();
+            }
+        }
     }
-    else if (sp.stream_type() == RS2_STREAM_POSE ||
-        sp.stream_type() == RS2_STREAM_ACCEL ||
-        sp.stream_type() == RS2_STREAM_GYRO)
+    else if (f.is<rs2::pose_frame>() || (f.is<rs2::motion_frame>()))
     {
         std::unique_lock<std::mutex> lock(i_sync.m);
-        i_sync.frame = f;
+        i_sync.frames.push_back(f);
         lock.unlock();
         i_sync.cv.notify_all();
     }

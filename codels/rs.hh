@@ -49,7 +49,7 @@ namespace realsense
 
     struct sync
     {
-        rs2::frame              frame;
+        std::vector<rs2::frame> frames;
         std::mutex              m;
         std::condition_variable cv;
     };
@@ -59,6 +59,8 @@ namespace realsense
         private:
         std::vector<realsense::stream>  _stream_desired;
         std::vector<rs2::sensor>        _sensors;
+        uint16_t _nb_depth_streams = 0; // number of depth stream to wait before notifying main thread
+        std::vector<rs2::frame> _queue; // waiting queue for depth and fisheye frames
 
         void _callback(rs2::frame f);    // Callback function
 

@@ -107,7 +107,8 @@ rs_viz_poll(realsense_sync_s **v_sync, or_camera_data **v_data,
 
     (*v_sync)->_sync->cv.wait(lock);
 
-    (*v_data)->_data = (*v_sync)->_sync->frame;
+    (*v_data)->_data = (*v_sync)->_sync->frames;
+    (*v_sync)->_sync->frames.clear();
 
     lock.unlock();
 
@@ -125,11 +126,17 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
             const realsense_undist_s *undist,
             const realsense_frame *frame, const genom_context self)
 {
-    rs2::frame f = v_data->_data;
-    double ms = f.get_timestamp();
-    long s = floor(ms/1000);
-    long ns = (ms-s*1e3)*1e6;
-    warnx("in: %s %ld.%09ld", f.get_profile().stream_name().c_str(), s, ns);
+    std::string printout = "";
+    for (rs2::frame f : v_data->_data)
+    {
+        // const rs2::frame* f = &v_data->_data[0];
+        double ms = f.get_timestamp();
+        int64_t s = floor(ms/1000);
+        int64_t ns = (ms-s*1e3)*1e6;
+        printout += f.get_profile().stream_name() + " " + std::to_string(s) + "." + std::to_string(ns) + " ; ";
+    }
+
+    warnx("viz: %s", printout.c_str());
 
 
     // or_sensor_frame* rfdata = frame->data("t265/1/raw", self);
@@ -191,7 +198,7 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
 {
     rs2::context ctx;
     rs2::device_list devices = ctx.query_devices();
-    std::cout << devices.size() << std::endl;
+
     if (devices.size() == 0)
     {
         realsense_e_io_detail d;
@@ -239,7 +246,8 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
     // realsense::stream accel {RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 62, 0,0};
     // realsense::stream gyro {RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F, 200, 0,0};
     // realsense::stream accel {RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 63, 0,0};
-    // realsense::stream depth {RS2_STREAM_DEPTH, RS2_FORMAT_Z16, 300, 848, 100};
+    realsense::stream depth {RS2_STREAM_DEPTH, RS2_FORMAT_Z16, 300, 848, 100};
+    realsense::stream ir {RS2_STREAM_INFRARED, RS2_FORMAT_Y8, 300, 848, 100};
     realsense::stream color {RS2_STREAM_COLOR, RS2_FORMAT_RGB8, 30, 1280, 720};
 
     (*pipe)->cam->add_stream(fe);
@@ -247,7 +255,8 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
     // (*pipe)->cam->add_stream(accel);
     // (*pipe)->cam->add_stream(gyro);
     (*pipe)->cam->add_stream(color);
-    // (*pipe)->cam->add_stream(depth);
+    (*pipe)->cam->add_stream(depth);
+    (*pipe)->cam->add_stream(ir);
     (*pipe)->cam->start();
 
     return realsense_ether;

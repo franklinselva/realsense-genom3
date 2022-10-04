@@ -35,7 +35,7 @@ using namespace cv;
 
 
 struct or_camera_data {
-    rs2::frame          _data;
+    std::vector<rs2::frame> _data;
 };
 
 struct realsense_sync_s {

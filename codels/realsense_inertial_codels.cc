@@ -79,7 +79,8 @@ rs_inertial_poll(realsense_sync_s **i_sync, or_camera_data **i_data,
 
     (*i_sync)->_sync->cv.wait(lock);
 
-    (*i_data)->_data = (*i_sync)->_sync->frame;
+    (*i_data)->_data = (*i_sync)->_sync->frames;
+    (*i_sync)->_sync->frames.clear();
 
     lock.unlock();
 
@@ -99,7 +100,7 @@ rs_inertial_main(int16_t compression_rate,
                  const realsense_frame *frame,
                  const genom_context self)
 {
-    const rs2::frame* f = &i_data->_data;
+    const rs2::frame* f = &i_data->_data[0];
     double ms = f->get_timestamp();
     long s = floor(ms/1000);
     long ns = (ms-s*1e3)*1e6;
