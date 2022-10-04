@@ -1,0 +1,165 @@
+/*/
+ * Copyright (c) 2019 LAAS/CNRS
+ * All rights reserved.
+ *
+ * Redistribution  and  use  in  source  and binary  forms,  with  or  without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *   1. Redistributions of  source  code must retain the  above copyright
+ *      notice and this list of conditions.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice and  this list of  conditions in the  documentation and/or
+ *      other materials provided with the distribution.
+ *
+ * THE SOFTWARE  IS PROVIDED "AS IS"  AND THE AUTHOR  DISCLAIMS ALL WARRANTIES
+ * WITH  REGARD   TO  THIS  SOFTWARE  INCLUDING  ALL   IMPLIED  WARRANTIES  OF
+ * MERCHANTABILITY AND  FITNESS.  IN NO EVENT  SHALL THE AUTHOR  BE LIABLE FOR
+ * ANY  SPECIAL, DIRECT,  INDIRECT, OR  CONSEQUENTIAL DAMAGES  OR  ANY DAMAGES
+ * WHATSOEVER  RESULTING FROM  LOSS OF  USE, DATA  OR PROFITS,  WHETHER  IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR  OTHER TORTIOUS ACTION, ARISING OUT OF OR
+ * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ *                                             Martin Jacquet - September 2022
+ */
+/* ---- Includes ---------------------------------------------------------- */
+#pragma require "openrobots2-idl >= 2.0"
+#pragma require "vision-idl"
+
+#include "or/pose/pose_estimator.gen"
+#include "or/sensor/camera.gen"
+#include "or/sensor/depth.idl"
+
+/* ---- Component declaration --------------------------------------------- */
+component realsense {
+    version	    "1.0";
+    email		"martin.jacquet@laas.fr";
+    lang		"c";
+    require	    "genom3 >= 2.99.26";
+    codels-require	"realsense2", "opencv";
+
+    /* ---- Interfaces ---------------------------------------------------- */
+    provides or_camera;
+
+    /* ---- Exceptions ---------------------------------------------------- */
+    exception e_rs { string<128> what; };
+    exception e_io { string<128> what; };
+    exception e_mem { string<128> what; };
+
+    /* ---- Ports --------------------------------------------------------- */
+    port multiple out   or::sensor::pc    pc;
+    port out            or_pose_estimator::state   imu;
+    port out            or_pose_estimator::state   odom;
+    /* interfaces ports:
+     *  port multiple out   or::sensor::frame    frame;
+     *  port out  or::sensor::intrinsics    intrinsics;
+     *  port out  or::sensor::extrinsics    extrinsics;
+     */
+
+    /* ---- Types --------------------------------------------------------- */
+    native undist_s;
+    native sync_s;
+
+    enum sensor_s {
+        d435,
+        d435i,
+        t265
+    };
+    // enum mode_s {
+    //     left,
+    //     right,
+    //     imu,
+    //     odom,
+    //     pc,
+    // };
+
+    /* ---- IDS ----------------------------------------------------------- */
+    ids {
+        or_camera::info info;
+
+        or_camera::pipe pipe;   // pipe for data streams
+
+        sync_s          v_sync; // condition variable for syncing sensor data callback and visual task
+        sync_s          i_sync; // condition variable for syncing sensor data callback and inertial task
+
+        or_camera::data v_data; // copy of visual data
+        or_camera::data i_data; // copy of inertial data
+
+        // unsigned short cam_id;  // id of camera to use (1, 2, both ?) -> make it enum
+        undist_s undist;    // undistortion parameters
+    };
+
+    /* ---- Tasks --------------------------------------------------------- */
+    task visual {
+        codel<start> rs_viz_start(out ::ids, out extrinsics, out frame)
+            yield sleep;
+
+        codel<sleep> rs_viz_sleep(in info.started)
+            yield pause::sleep, poll;
+
+        async codel<poll> rs_viz_poll(inout v_sync, out v_data)
+            yield pause::poll, poll, main;
+
+        codel<main> rs_viz_main(in info.compression_rate, in v_data, in undist, out frame)
+            yield sleep;
+    };
+
+    task inertial {
+        codel<start> rs_inertial_start()
+            yield sleep;
+
+        codel<sleep> rs_inertial_sleep(in info.started)
+            yield pause::sleep, poll;
+
+            async codel<poll> rs_inertial_poll(inout i_sync, out i_data)
+                yield pause::poll, poll, main;
+
+        codel<main> rs_inertial_main(in info.compression_rate, in i_data, in undist, out frame)
+            yield sleep;
+    };
+
+    /* ---- Hardware connection ------------------------------------------- */
+    activity connect(in string<32> serial = : "Serial number of the device") {
+        task visual;
+        throw e_rs, e_io;
+
+        codel<start> rs_connect(in serial, out pipe, out info.started, out intrinsics)
+            yield ether;
+    };
+
+    activity disconnect() {
+        task visual;
+        throw e_rs;
+        after connect;
+
+        codel<start> rs_disconnect(out pipe, out info.started)
+            yield ether;
+    };
+
+    /* ---- Control setters ----------------------------------------------- */
+    attribute set_compression(in info.compression_rate = -1 : "Image JPEG compression (0-100); -1 to disable.") {
+        throw e_io;
+        validate set_compression_rate(local in compression_rate);
+    };
+
+    activity set_undistortion(in unsigned short size = 500 : "pixel size of the desired undistorted image",
+                              in float fov = 2 : "Field of view of the undistorted image in radian") {
+        task visual;
+        throw e_io;
+
+        codel<start> rs_set_undistort(in size, in fov, out undist, out intrinsics)
+            yield ether;
+    };
+
+    // activity enable_camera() {
+    //     throw e_io;
+    // };
+
+    /* ---- Calibration --------------------------------------------------- */
+    activity set_extrinsics(in sequence<float,6> ext_values) {
+        task visual;
+
+        codel<start> rs_set_extrinsics(in ext_values, out extrinsics)
+            yield ether;
+    };
+
+};

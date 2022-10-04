@@ -1,0 +1,13 @@
+
+# pkg-config file for uninstalled realsense interface and codels library
+#
+prefix=@abs_top_builddir@
+libdir=${prefix}/codels
+includedir=${prefix}/codels
+
+Name: realsense-genom3
+Description: realsense interface and codels library
+Version: @PACKAGE_VERSION@
+Requires: openrobots2-idl >= 2.0, vision-idl, genom3 >= 2.99.26
+Libs: ${libdir}/librealsense_codels.la
+Libs.private: @codels_requires_LIBS@
