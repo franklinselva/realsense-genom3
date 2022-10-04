@@ -59,19 +59,6 @@ component realsense {
     native undist_s;
     native sync_s;
 
-    enum sensor_s {
-        d435,
-        d435i,
-        t265
-    };
-    // enum mode_s {
-    //     left,
-    //     right,
-    //     imu,
-    //     odom,
-    //     pc,
-    // };
-
     /* ---- IDS ----------------------------------------------------------- */
     ids {
         or_camera::info info;
@@ -84,7 +71,6 @@ component realsense {
         or_camera::data v_data; // copy of visual data
         or_camera::data i_data; // copy of inertial data
 
-        // unsigned short cam_id;  // id of camera to use (1, 2, both ?) -> make it enum
         undist_s undist;    // undistortion parameters
     };
 
