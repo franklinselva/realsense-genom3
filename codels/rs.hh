@@ -76,7 +76,6 @@ namespace realsense
         void init(rs2::device dev);
 
         void add_stream(realsense::stream s);
-        void rm_stream(realsense::stream s);
         void clear_streams();
 
         void start();

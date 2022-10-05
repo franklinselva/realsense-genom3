@@ -35,6 +35,7 @@ using namespace cv;
 
 realsense::camera::~camera() { this->stop(); }
 
+
 void realsense::camera::init(rs2::device dev)
 {
     if (_sensors.size() == 0)
@@ -42,6 +43,7 @@ void realsense::camera::init(rs2::device dev)
         _sensors = dev.query_sensors();
     }
 }
+
 
 void realsense::camera::add_stream(realsense::stream s)
 {
@@ -52,10 +54,6 @@ void realsense::camera::add_stream(realsense::stream s)
         _nb_depth_streams += 2;
 }
 
-void realsense::camera::rm_stream(realsense::stream s)
-{
-    // TODO
-}
 
 void realsense::camera::clear_streams()
 {
@@ -63,6 +61,7 @@ void realsense::camera::clear_streams()
     _nb_depth_streams = 0;
     _intr = rs2_intrinsics();
 }
+
 
 void realsense::camera::start()
 {
@@ -96,6 +95,7 @@ void realsense::camera::start()
     }
 }
 
+
 void realsense::camera::stop()
 {
     for (rs2::sensor s : _sensors)
@@ -109,7 +109,8 @@ void realsense::camera::stop()
     _sensors.clear();
 }
 
-// Callback function
+
+// Realsense frame callback function
 void realsense::camera::_callback(rs2::frame f)
 {
     if (f.is<rs2::video_frame>())
