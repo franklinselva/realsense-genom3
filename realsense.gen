@@ -146,12 +146,12 @@ component realsense {
         validate set_compression_rate(local in compression_rate);
     };
 
-    activity set_undistortion(in unsigned short size = 500 : "Pixel size of the desired undistorted image",
+    activity set_undistortion(in unsigned short size = 500 : "Pixel size of the desired undistorted image; 0 to disable",
                               in float fov = 2 : "Field of view of the undistorted image in radian") {
         task visual;
         throw e_io;
 
-        codel<start> rs_set_undistort(in size, in fov, out undist, out intrinsics)
+        codel<start> rs_set_undistort(in size, in fov, in pipe, out undist, out intrinsics)
             yield ether;
     };
 

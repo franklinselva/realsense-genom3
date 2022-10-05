@@ -423,7 +423,7 @@ a|.Throws
 |===
 a|.Inputs
 [disc]
- * `unsigned short` `size` (default `"500"`) Pixel size of the desired undistorted image
+ * `unsigned short` `size` (default `"500"`) Pixel size of the desired undistorted image; 0 to disable
 
  * `float` `fov` (default `"2"`) Field of view of the undistorted image in radian
 

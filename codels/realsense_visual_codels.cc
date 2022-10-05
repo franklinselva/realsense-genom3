@@ -72,17 +72,24 @@ rs_viz_start(realsense_ids *ids,
     ids->info.frequency = 30;
     snprintf(ids->info.format, sizeof(ids->info.format), "RGB8");
     ids->info.size = {1280, 720};
-    ids->info.compression_rate = -1;
 
-    // frame->open("t265/1/raw", self);
-    // frame->open("t265/1/compressed", self);
-    // frame->open("t265/2/raw", self);
-    // frame->open("t265/2/compressed", self);
+    // frame->open("FE_1/raw", self);
+    // frame->open("FE_1/compressed", self);
+    // frame->open("FE_2/raw", self);
+    // frame->open("FE_2/compressed", self);
     //
-    // (void)genom_sequence_reserve(&(frame->data("t265/1/raw", self)->pixels), 0);
-    // (void)genom_sequence_reserve(&(frame->data("t265/1/compressed", self)->pixels), 0);
-    // (void)genom_sequence_reserve(&(frame->data("t265/2/raw", self)->pixels), 0);
-    // (void)genom_sequence_reserve(&(frame->data("t265/2/compressed", self)->pixels), 0);
+    // frame->open("color/raw", self);
+    // frame->open("color/compressed", self);
+    // frame->open("IR_left/raw", self);
+    // frame->open("IR_left/compressed", self);
+    // frame->open("IR_right/raw", self);
+    // frame->open("IR_right/compressed", self);
+    //
+    // (void) genom_sequence_reserve(&(frame->data("t265/1/raw", self)->pixels), 0);
+    // (void) genom_sequence_reserve(&(frame->data("t265/1/compressed", self)->pixels), 0);
+    // (void) genom_sequence_reserve(&(frame->data("t265/2/raw", self)->pixels), 0);
+    // (void) genom_sequence_reserve(&(frame->data("t265/2/compressed", self)->pixels), 0);
+    // (void) genom_sequence_reserve(&(ids->pc.points), 0)
 
     return realsense_sleep;
 }
@@ -315,47 +322,84 @@ rs_disconnect(or_camera_pipe **pipe, bool *started,
  * Throws realsense_e_io.
  */
 genom_event
-rs_set_undistort(uint16_t size, float fov, realsense_undist_s **undist,
+rs_set_undistort(uint16_t size, float fov, const or_camera_pipe *pipe,
+                 realsense_undist_s **undist,
                  const realsense_intrinsics *intrinsics,
                  const genom_context self)
 {
+    // check if either COLOR or FISHEYE is enabled, cannot compute undistortion map without initial calibration
+    rs2_intrinsics* intr = &(*pipe)->cam->_intr;
+    if (intr->width != 0)
+    {
+        realsense_e_io_detail d;
+        snprintf(d.what, sizeof(d.what), "Fisheye stream not enabled, cannot compute undistortion map");
+        warnx("%s", d.what);
+        return realsense_e_io(&d,self);
+    }
+
     or_sensor_intrinsics* intr_data = intrinsics->data(self);
 
-    // Get current calibration
-    Mat K = Mat::zeros(3, 3, CV_32F);
-    K.at<float>(0,0) = intr_data->calib.fx;
-    K.at<float>(1,1) = intr_data->calib.fy;
-    K.at<float>(0,2) = intr_data->calib.cx;
-    K.at<float>(1,2) = intr_data->calib.cy;
-    K.at<float>(0,1) = intr_data->calib.gamma;
-    K.at<float>(2,2) = 1;
-    Mat D = (Mat_<float>(4,1) <<
-        intr_data->disto.k1,
-        intr_data->disto.k2,
-        intr_data->disto.k3,
-        intr_data->disto.p1
-    );
+    if (size == 0)
+    {
+        *intr_data = {
+            .calib = {
+                intr->fx,
+                intr->fy,
+                intr->ppx,
+                intr->ppy,
+                0,
+            },
+            .disto = {
+                intr->coeffs[0],
+                intr->coeffs[1],
+                intr->coeffs[2],
+                intr->coeffs[3],
+                intr->coeffs[4],
+            },
+        };
+        intrinsics->write(self);
 
-    // Compute desired calibration
-    float f_px = size/2 /tan(fov/2);
-    float c = size/2;
-    Mat P = (Mat_<float>(3,3) <<
-        f_px,    0, c,
-           0, f_px, c,
-           0,    0, 1
-    );
+        warnx("stop undistortion");
+    }
+    else
+    {
+        // Get current calibration
+        Mat K = Mat::zeros(3, 3, CV_32F);
+        K.at<float>(0,0) = intr_data->calib.fx;
+        K.at<float>(1,1) = intr_data->calib.fy;
+        K.at<float>(0,2) = intr_data->calib.cx;
+        K.at<float>(1,2) = intr_data->calib.cy;
+        K.at<float>(0,1) = intr_data->calib.gamma;
+        K.at<float>(2,2) = 1;
+        Mat D = (Mat_<float>(4,1) <<
+            intr_data->disto.k1,
+            intr_data->disto.k2,
+            intr_data->disto.k3,
+            intr_data->disto.p1
+        );
 
-    // Compute undistortion maps
-    fisheye::initUndistortRectifyMap(K, D, Mat::eye(3,3, CV_32F), P, Size(size,size), CV_16SC2, (*undist)->m1, (*undist)->m2);
+        // Compute desired calibration
+        float f_px = size/2 /tan(fov/2);
+        float c = size/2;
+        Mat P = (Mat_<float>(3,3) <<
+            f_px,    0, c,
+               0, f_px, c,
+               0,    0, 1
+        );
 
-    // Publish intrinsincs with 'fake distortion' (=0) since the image is undistorted before publishing
-    *intr_data = {
-        .calib = { f_px, f_px, c, c, 0, },
-        .disto = { 0, 0, 0, 0, 0, },
-    };
-    intrinsics->write(self);
+        // Compute undistortion maps
+        fisheye::initUndistortRectifyMap(K, D, Mat::eye(3,3, CV_32F), P, Size(size,size), CV_16SC2, (*undist)->m1, (*undist)->m2);
 
-    warnx("new undistortion maps computed");
+        // Publish intrinsincs with 'fake distortion' (=0) since the image is undistorted before publishing
+        *intr_data = {
+            .calib = { f_px, f_px, c, c, 0, },
+            .disto = { 0, 0, 0, 0, 0, },
+        };
+        intrinsics->write(self);
+
+        warnx("new undistortion maps computed");
+    }
+
     return realsense_ether;
 }
 
