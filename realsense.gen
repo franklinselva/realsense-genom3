@@ -47,7 +47,8 @@ component realsense {
 
     /* ---- Ports --------------------------------------------------------- */
     port multiple out   or::sensor::pc    pc;
-    port out            or_pose_estimator::state   imu;
+    port out            or_pose_estimator::state   accel;
+    port out            or_pose_estimator::state   gyro;
     port out            or_pose_estimator::state   odom;
     /* interfaces ports:
      *  port multiple out   or::sensor::frame    frame;
@@ -93,7 +94,7 @@ component realsense {
     };
 
     task inertial {
-        codel<start> rs_inertial_start()
+        codel<start> rs_inertial_start(out accel, out gyro, out odom)
             yield sleep;
 
         codel<sleep> rs_inertial_sleep(in info.started)
@@ -102,7 +103,7 @@ component realsense {
             async codel<poll> rs_inertial_poll(inout i_sync, out i_data)
                 yield sleep, main;
 
-        codel<main> rs_inertial_main(in info.compression_rate, in i_data, in undist, out frame)
+        codel<main> rs_inertial_main(in info.compression_rate, in i_data, in undist, out accel, out gyro, out odom)
             yield sleep;
     };
 
