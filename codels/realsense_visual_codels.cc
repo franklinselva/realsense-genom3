@@ -61,8 +61,8 @@ rs_viz_start(realsense_ids *ids,
     ids->pipe = new or_camera_pipe();
     ids->v_sync = new realsense_sync_s();
     ids->i_sync = new realsense_sync_s();
-    ids->pipe->v_sync = ids->v_sync;
-    ids->pipe->i_sync = ids->i_sync;
+    ids->v_sync->_sync = &ids->pipe->cam->v_sync;
+    ids->i_sync->_sync = &ids->pipe->cam->i_sync;
 
     ids->v_data = new or_camera_data();
     ids->i_data = new or_camera_data();

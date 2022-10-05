@@ -28,7 +28,6 @@
 #include <mutex>
 
 #include <librealsense2/rs.hpp>
-// using namespace rs2;
 
 #include <err.h>
 #include <iostream>

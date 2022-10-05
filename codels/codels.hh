@@ -44,16 +44,12 @@ struct realsense_sync_s {
 
 struct or_camera_pipe {
     realsense::camera*  cam;
-    realsense_sync_s*   v_sync;
-    realsense_sync_s*   i_sync;
 
     or_camera_pipe() { cam = new realsense::camera(); }
     ~or_camera_pipe() { delete cam; }
 
     void init(rs2::device dev) {
         cam->init(dev);
-        v_sync->_sync = &cam->v_sync;
-        i_sync->_sync = &cam->i_sync;
     }
 };
 
