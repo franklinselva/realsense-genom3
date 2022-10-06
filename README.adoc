@@ -335,7 +335,7 @@ a|.Throws
 
 a|.Context
 [disc]
-  * In task `<<visual>>`
+  * In task `<<main>>`
   * Updates port `<<intrinsics>>`
 |===
 
@@ -353,7 +353,7 @@ a|.Throws
 
 a|.Context
 [disc]
-  * In task `<<visual>>`
+  * In task `<<main>>`
 |===
 
 '''
@@ -507,13 +507,29 @@ a|.Inputs
 
 a|.Context
 [disc]
-  * In task `<<visual>>`
+  * In task `<<main>>`
   * Updates port `<<extrinsics>>`
 |===
 
 '''
 
 == Tasks
+
+[[main]]
+=== main
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * Free running
+* Updates port `<<frame>>`
+* Updates port `<<intrinsics>>`
+* Updates port `<<extrinsics>>`
+* Updates port `<<pc>>`
+|===
+
+'''
 
 [[visual]]
 === visual
@@ -524,8 +540,6 @@ a|.Context
 [disc]
   * Free running
 * Updates port `<<frame>>`
-* Updates port `<<intrinsics>>`
-* Updates port `<<extrinsics>>`
 |===
 
 '''
@@ -541,6 +555,19 @@ a|.Context
 * Updates port `<<accel>>`
 * Updates port `<<gyro>>`
 * Updates port `<<odom>>`
+|===
+
+'''
+
+[[depth]]
+=== depth
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Context
+[disc]
+  * Free running
+* Updates port `<<pc>>`
 |===
 
 '''

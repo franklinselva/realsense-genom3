@@ -28,13 +28,11 @@
 
 #include "codels.hh"
 
-#include <opencv2/opencv.hpp>
-using namespace cv;
-
 #include <err.h>
 #include <cmath>
-#include <iostream>
 #include <sys/time.h>
+
+#include <iostream>
 
 
 /* --- Task inertial ---------------------------------------------------- */
@@ -139,13 +137,15 @@ rs_inertial_poll(realsense_sync_s **i_sync, or_camera_data **i_data,
 {
     std::unique_lock<std::mutex> lock((*i_sync)->_sync->m);
 
-    (*i_sync)->_sync->cv.wait_for(lock, std::chrono::duration<int16_t>(realsense_poll_duration_sec));
+    if (!(*i_sync)->_sync->frames->size())
+        (*i_sync)->_sync->cv.wait_for(lock, std::chrono::duration<int16_t>(realsense_poll_duration_sec));
 
-    if ((*i_sync)->_sync->frames.size() == 0)
+    if ((*i_sync)->_sync->frames->size() == 0)
         return realsense_sleep;
 
-    (*i_data)->_data = (*i_sync)->_sync->frames;
-    (*i_sync)->_sync->frames.clear();
+    rs2::frame f;
+    (*i_sync)->_sync->frames->poll_for_frame(&f);
+    (*i_data)->_data.enqueue(f);
 
     lock.unlock();
 
@@ -166,13 +166,14 @@ rs_inertial_main(int16_t compression_rate,
                  const realsense_gyro *gyro,
                  const realsense_odom *odom, const genom_context self)
 {
-    const rs2::frame* f = &i_data->_data[0];
-    double ms = f->get_timestamp();
+    rs2::frame f;
+    i_data->_data.poll_for_frame(&f);
+    double ms = f.get_timestamp();
 
-    rs2_stream type = f->get_profile().stream_type();
+    rs2_stream type = f.get_profile().stream_type();
     if (type == RS2_STREAM_ACCEL)
     {
-        rs2_vector acc = f->as<rs2::motion_frame>().get_motion_data();
+        rs2_vector acc = f.as<rs2::motion_frame>().get_motion_data();
 
         accel->data(self)->ts.sec = floor(ms/1000);
         accel->data(self)->ts.nsec = (ms - (double)accel->data(self)->ts.sec*1e3) * 1e6;
@@ -186,7 +187,7 @@ rs_inertial_main(int16_t compression_rate,
     }
     else if (type == RS2_STREAM_GYRO)
     {
-        rs2_vector avel = f->as<rs2::motion_frame>().get_motion_data();
+        rs2_vector avel = f.as<rs2::motion_frame>().get_motion_data();
 
         gyro->data(self)->ts.sec = floor(ms/1000);
         gyro->data(self)->ts.nsec = (ms - (double)gyro->data(self)->ts.sec*1e3) * 1e6;
@@ -200,11 +201,11 @@ rs_inertial_main(int16_t compression_rate,
     }
     else if (type == RS2_STREAM_POSE)
     {
-        rs2_pose pose = f->as<rs2::pose_frame>().get_pose_data();
+        rs2_pose pose = f.as<rs2::pose_frame>().get_pose_data();
         // Uncertainty is provided by the T265 as two confidence level integers:
         // pose.mapper_confidence: Pose map confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
         // pose.tracker_confidence: Pose confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
-        // Antonio Enrique was using a default covariance (eg 1e-2), scaled by 10^(3-confidence)
+        // Antonio Enrique was using a default covariance (eg 1e-2), scaled by 1e(3-confidence)
         // any solution would by welcome
         odom->data(self)->ts.sec = floor(ms/1000);
         odom->data(self)->ts.nsec = (ms - (double)odom->data(self)->ts.sec*1e3) * 1e6;

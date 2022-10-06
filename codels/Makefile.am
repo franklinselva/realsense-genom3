@@ -26,8 +26,10 @@ lib_LTLIBRARIES = librealsense_codels.la
 
 librealsense_codels_la_SOURCES  =	realsense_c_types.h
 librealsense_codels_la_SOURCES +=	realsense_codels.cc
+librealsense_codels_la_SOURCES +=	realsense_main_codels.cc
 librealsense_codels_la_SOURCES +=	realsense_visual_codels.cc
 librealsense_codels_la_SOURCES +=	realsense_inertial_codels.cc
+librealsense_codels_la_SOURCES +=	realsense_depth_codels.cc
 librealsense_codels_la_SOURCES +=	rs.cc
 
 librealsense_codels_la_CPPFLAGS =	$(requires_CFLAGS)

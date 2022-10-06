@@ -68,9 +68,11 @@ component realsense {
 
         sync_s          v_sync; // condition variable for syncing sensor data callback and visual task
         sync_s          i_sync; // condition variable for syncing sensor data callback and inertial task
+        sync_s          d_sync; // condition variable for syncing sensor data callback and depth task
 
         or_camera::data v_data; // copy of visual data
         or_camera::data i_data; // copy of inertial data
+        or_camera::data d_data; // copy of depth data
 
         undist_s undist;    // undistortion parameters
     };
@@ -79,8 +81,13 @@ component realsense {
     const unsigned short poll_duration_sec = 1; // duration of each poll before releasing mutex
 
     /* ---- Tasks --------------------------------------------------------- */
+    task main {
+        codel<start> rs_start(out ::ids, out extrinsics, out intrinsics, out frame, out pc)
+            yield ether;
+    };
+
     task visual {
-        codel<start> rs_viz_start(out ::ids, out extrinsics, out intrinsics, out frame)
+        codel<start> rs_viz_start(out frame)
             yield sleep;
 
         codel<sleep> rs_viz_sleep(in info.started)
@@ -107,9 +114,23 @@ component realsense {
             yield sleep;
     };
 
+    task depth {
+        codel<start> rs_depth_start(out pc)
+            yield sleep;
+
+        codel<sleep> rs_depth_sleep(in info.started)
+            yield pause::sleep, poll;
+
+        async codel<poll> rs_depth_poll(inout d_sync, out d_data)
+            yield sleep, main;
+
+        codel<main> rs_depth_main(in d_data, out pc)
+            yield sleep;
+    };
+
     /* ---- Hardware connection ------------------------------------------- */
     activity connect(in string<32> serial = : "Serial number of the device") {
-        task visual;
+        task main;
         throw e_rs, e_io;
 
         codel<start> rs_connect(in serial, out pipe, out info.started, out intrinsics)
@@ -117,7 +138,7 @@ component realsense {
     };
 
     activity disconnect() {
-        task visual;
+        task main;
         throw e_rs;
         after connect;
 
@@ -170,7 +191,7 @@ component realsense {
 
     /* ---- Extrinsics ---------------------------------------------------- */
     activity set_extrinsics(in sequence<float,6> ext_values) {
-        task visual;
+        task main;
 
         codel<start> rs_set_extrinsics(in ext_values, out extrinsics)
             yield ether;

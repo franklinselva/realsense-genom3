@@ -33,6 +33,14 @@
 using namespace cv;
 
 
+realsense::camera::camera()
+{
+    // Init sync structs with maximum sizes for frame queues
+    v_sync.init(2);
+    i_sync.init(1);
+    d_sync.init(1);
+}
+
 realsense::camera::~camera() { this->stop(); }
 
 
@@ -48,17 +56,12 @@ void realsense::camera::init(rs2::device dev)
 void realsense::camera::add_stream(realsense::stream s)
 {
     _stream_desired.push_back(s);
-    if (s.type == RS2_STREAM_DEPTH)
-        _nb_depth_streams++;
-    if (s.type == RS2_STREAM_INFRARED)
-        _nb_depth_streams += 2;
 }
 
 
 void realsense::camera::clear_streams()
 {
     _stream_desired.clear();
-    _nb_depth_streams = 0;
     _intr = rs2_intrinsics();
 }
 
@@ -104,7 +107,9 @@ void realsense::camera::stop()
             s.stop();
             s.close();
         }
-        catch (rs2::error& e) {} // catch exception for sensor not opened/streaming
+        catch (rs2::error& e) {
+            // warnx("rs error in stop: %s", e.what());
+        } // catch exception for sensor not opened/streaming
     }
     _sensors.clear();
 }
@@ -113,39 +118,42 @@ void realsense::camera::stop()
 // Realsense frame callback function
 void realsense::camera::_callback(rs2::frame f)
 {
-    if (f.is<rs2::video_frame>())
+    if (f.is<rs2::depth_frame>())
+    {
+        std::unique_lock<std::mutex> lock(d_sync.m);
+        d_sync.frames->enqueue(f);
+        lock.unlock();
+        d_sync.cv.notify_all();
+    }
+    else if (f.is<rs2::video_frame>())
     {
         std::unique_lock<std::mutex> lock(v_sync.m);
 
         // check stream type and fill struct accordingly
         rs2_stream st = f.get_profile().stream_type();
-        // color stream is composed of a single frame; retrieve it and notify
+        // color and depth stream are composed of a single frame; retrieve it and notify
         if (st == RS2_STREAM_COLOR)
         {
-            v_sync.frames.push_back(f);
+            v_sync.frames->enqueue(f);
             lock.unlock();
             v_sync.cv.notify_all();
         }
         // enqueue FE frames and notify when both are retrieved
         else if (st == RS2_STREAM_FISHEYE)
         {
-            _queue.push_back(f);
-            if (_queue.size() == 2)
+            v_sync.frames->enqueue(f);
+            if (v_sync.frames->size() == 2)
             {
-                v_sync.frames = _queue;
-                _queue.clear();
                 lock.unlock();
                 v_sync.cv.notify_all();
             }
         }
-        // enqueue depth stream until all are retrieved (depending on enabled streams)
-        else if (st == RS2_STREAM_DEPTH || st == RS2_STREAM_INFRARED)
+        // enqueue IR frames and notify when both are retrieved
+        else if (st == RS2_STREAM_INFRARED)
         {
-            _queue.push_back(f);
-            if (_queue.size() == _nb_depth_streams)
+            v_sync.frames->enqueue(f);
+            if (v_sync.frames->size() == 2)
             {
-                v_sync.frames = _queue;
-                _queue.clear();
                 lock.unlock();
                 v_sync.cv.notify_all();
             }
@@ -154,7 +162,7 @@ void realsense::camera::_callback(rs2::frame f)
     else if (f.is<rs2::pose_frame>() || (f.is<rs2::motion_frame>()))
     {
         std::unique_lock<std::mutex> lock(i_sync.m);
-        i_sync.frames.push_back(f);
+        i_sync.frames->enqueue(f);
         lock.unlock();
         i_sync.cv.notify_all();
     }
