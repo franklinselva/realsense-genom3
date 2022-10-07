@@ -496,6 +496,19 @@ a|.Throws
 
 '''
 
+[[set_registration]]
+=== set_registration (attribute)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `boolean` `registration` (default `"0"`) Enable or disable point cloud registration
+
+|===
+
+'''
+
 [[set_extrinsics]]
 === set_extrinsics (activity)
 

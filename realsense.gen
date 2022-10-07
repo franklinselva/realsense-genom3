@@ -75,6 +75,8 @@ component realsense {
         or_camera::data d_data; // copy of depth data
 
         undist_s undist;    // undistortion parameters
+
+        boolean registration;   // enable registration of point cloud
     };
 
     /* ---- Constants ----------------------------------------------------- */
@@ -124,7 +126,7 @@ component realsense {
         async codel<poll> rs_depth_poll(inout d_sync, out d_data)
             yield sleep, main;
 
-        codel<main> rs_depth_main(in d_data, out pc)
+        codel<main> rs_depth_main(in d_data, in registration, out pc)
             yield sleep;
     };
 
@@ -180,14 +182,18 @@ component realsense {
         throw e_io;
         validate set_format(local in format);
     };
+
     attribute set_fps(in info.frequency = 30 : "Camera frequency (6, 15, 30, 60)") {
         throw e_io;
         validate set_fps(local in frequency, in info.size.w);
     };
+
     attribute set_size(in info.size = {1280, 720} : "Video size (1920x1080, 1280x720, 960x540, 848x480, 640x480, 640x360, 424x240, 320x240)") {
         throw e_io;
         validate set_size(local in size);
     };
+
+    attribute set_registration(in registration = FALSE : "Enable or disable point cloud registration");
 
     /* ---- Extrinsics ---------------------------------------------------- */
     activity set_extrinsics(in sequence<float,6> ext_values) {

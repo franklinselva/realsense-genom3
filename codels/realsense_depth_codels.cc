@@ -48,6 +48,8 @@ rs_depth_start(const realsense_pc *pc, const genom_context self)
 {
     pc->open("depth", self);
     (void) genom_sequence_reserve(&(pc->data("depth", self)->points), 0);
+    (void) genom_sequence_reserve(&(pc->data("depth", self)->colors._value), 0);
+    pc->data("depth", self)->colors._present = false;
 
     return realsense_sleep;
 }
@@ -101,15 +103,69 @@ rs_depth_poll(realsense_sync_s **d_sync, or_camera_data **d_data,
  * Yields to realsense_sleep.
  */
 genom_event
-rs_depth_main(const or_camera_data *d_data, const realsense_pc *pc,
-              const genom_context self)
+rs_depth_main(const or_camera_data *d_data, bool registration,
+              const realsense_pc *pc, const genom_context self)
 {
     rs2::frame f;
     d_data->_data.poll_for_frame(&f);
-    double ms = f.get_timestamp();
-    // int64_t s = floor(ms/1000);
-    // int64_t ns = (ms-s*1e3)*1e6;
-    // warnx("%s %ld.%ld", f.get_profile().stream_name().c_str(), s, ns);
+
+    // Get points from frame
+    rs2::pointcloud rs_pc;
+    rs2::points points = rs_pc.calculate(f);
+
+    // Map pc to color frame for registration
+    // rs_pc.map_to(data->rgb);
+
+    if (points.size())
+    {
+        // Update port data lenght and reallocate if need be
+        or_sensor_pc* d_data = pc->data("depth", self);
+        if (points.size() != d_data->points._length)
+        {
+            if (points.size() > d_data->points._maximum)
+            {
+                if (genom_sequence_reserve(&(d_data->points), points.size())  == -1)
+                {
+                    realsense_e_mem_detail d;
+                    snprintf(d.what, sizeof(d.what), "unable to allocate 3d point memory");
+                    return realsense_e_mem(&d,self);
+                }
+                // if (registration && genom_sequence_reserve(&(d_data->colors._value), points.size())  == -1)
+                // {
+                //         realsense_e_mem_detail d;
+                //         snprintf(d.what, sizeof(d.what), "unable to allocate point color memory");
+                //         return realsense_e_mem(&d,self);
+                // }
+                // else
+                //     (void) genom_sequence_reserve(&(d_data->colors._value), 0);
+            }
+            d_data->points._length = points.size();
+            // if (registration)
+            // {
+            //     d_data->colors._present = true;
+            //     d_data->colors._value._length = points.size();
+            // }
+            // else
+            //     d_data->colors._present = false;
+        }
+
+        // Copy data on port, update timestamp and write
+        const rs2::vertex* vertices = points.get_vertices();
+        // const rs2::texture_coordinate* text_coords = points.get_texture_coordinates();
+        for (uint32_t i = 0; i < points.size(); i++)
+        {
+            d_data->points._buffer[i].x = vertices[i].x;
+            d_data->points._buffer[i].y = vertices[i].y;
+            d_data->points._buffer[i].z = vertices[i].z;
+        }
+
+        // Copy data on port, update timestamp and write
+        double ms = f.get_timestamp();
+        d_data->ts.sec = floor(ms/1000);
+        d_data->ts.nsec = (ms - (double)d_data->ts.sec*1000) * 1e6;
+
+        pc->write("depth", self);
+    }
 
     return realsense_sleep;
 }
