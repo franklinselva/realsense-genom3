@@ -109,8 +109,8 @@ component realsense {
         codel<sleep> rs_inertial_sleep(in info.started)
             yield pause::sleep, poll;
 
-            async codel<poll> rs_inertial_poll(inout i_sync, out i_data)
-                yield sleep, main;
+        async codel<poll> rs_inertial_poll(inout i_sync, out i_data)
+            yield sleep, main;
 
         codel<main> rs_inertial_main(in info.compression_rate, in i_data, in undist, out accel, out gyro, out odom)
             yield sleep;
@@ -164,7 +164,7 @@ component realsense {
     };
 
     /* ---- Camera setting ------------------------------------------------ */
-    attribute set_compression(in info.compression_rate = -1 : "Image JPEG compression (0-100); -1 to disable.") {
+    attribute set_jpeg(in info.compression_rate = -1 : "Image JPEG compression level (0-100); -1 to disable.") {
         throw e_io;
         validate set_compression_rate(local in compression_rate);
     };

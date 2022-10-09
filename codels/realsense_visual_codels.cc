@@ -48,29 +48,29 @@ using namespace cv;
 genom_event
 rs_viz_start(const realsense_frame *frame, const genom_context self)
 {
-    frame->open("FE_l/raw", self);
-    frame->open("FE_l/comp", self);
-    frame->open("FE_r/raw", self);
-    frame->open("FE_r/comp", self);
+    frame->open("FE_l", self);
+    frame->open("FE_l/jpeg", self);
+    frame->open("FE_r", self);
+    frame->open("FE_r/jpeg", self);
 
-    (void) genom_sequence_reserve(&(frame->data("FE_l/raw", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("FE_l/comp", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("FE_r/raw", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("FE_r/comp", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("FE_l", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("FE_l/jpeg", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("FE_r", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("FE_r/jpeg", self)->pixels), 0);
 
-    frame->open("color/raw", self);
-    frame->open("color/comp", self);
-    frame->open("IR_l/raw", self);
-    frame->open("IR_l/comp", self);
-    frame->open("IR_r/raw", self);
-    frame->open("IR_r/comp", self);
+    frame->open("color", self);
+    frame->open("color/jpeg", self);
+    frame->open("IR_l", self);
+    frame->open("IR_l/jpeg", self);
+    frame->open("IR_r", self);
+    frame->open("IR_r/jpeg", self);
 
-    (void) genom_sequence_reserve(&(frame->data("color/raw", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("color/comp", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_l/raw", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_l/comp", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_r/raw", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_r/comp", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("color", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("color/jpeg", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("IR_l", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("IR_l/jpeg", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("IR_r", self)->pixels), 0);
+    (void) genom_sequence_reserve(&(frame->data("IR_r/jpeg", self)->pixels), 0);
 
     return realsense_sleep;
 }
@@ -109,12 +109,11 @@ rs_viz_poll(realsense_sync_s **v_sync, or_camera_data **v_data,
         return realsense_sleep;
 
     rs2::frame f;
-    do
+    while ((*v_sync)->_sync->frames->size())
     {
         (*v_sync)->_sync->frames->poll_for_frame(&f);
         (*v_data)->_data.enqueue(f);
     }
-    while ((*v_sync)->_sync->frames->size());
 
     lock.unlock();
 
@@ -134,7 +133,7 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
 {
     rs2::frame f;
     uint16_t i = 0; // counter to discriminate IR and FE frames
-    do
+    while (v_data->_data.size())
     {
         v_data->_data.poll_for_frame(&f);
         rs2::video_frame fv = f.as<rs2::video_frame>();
@@ -181,7 +180,7 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
         }
 
         // Update port data lenght and reallocate if need be
-        or_sensor_frame* r_data = frame->data((port_name + "/raw").c_str(), self);
+        or_sensor_frame* r_data = frame->data(port_name.c_str(), self);
         if (h*w*c != r_data->pixels._length)
         {
             if (h*w*c > r_data->pixels._maximum
@@ -205,9 +204,9 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
         r_data->ts.sec = floor(ms/1000);
         r_data->ts.nsec = (ms - (double)r_data->ts.sec*1000) * 1e6;
 
-        frame->write((port_name + "/raw").c_str(), self);
+        frame->write(port_name.c_str(), self);
 
-        // Compress image if requested
+        //compress image if requested
         if (compression_rate != -1)
         {
             std::vector<int32_t> compression_params;
@@ -224,7 +223,7 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
             imencode(".jpg", cvframe, buf, compression_params);
 
             // Update port data lenght and reallocate if need be
-            or_sensor_frame* c_data = frame->data((port_name + "/comp").c_str(), self);
+            or_sensor_frame* c_data = frame->data((port_name + "/jpeg").c_str(), self);
             if (buf.size() != c_data->pixels._length)
             {
                 if (buf.size() > c_data->pixels._maximum &&
@@ -246,12 +245,11 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
             memcpy(c_data->pixels._buffer, buf.data(), buf.size());
             c_data->ts = r_data->ts;
 
-            frame->write((port_name + "/comp").c_str(), self);
+            frame->write((port_name + "/jpeg").c_str(), self);
         }
 
         i++;
     }
-    while (v_data->_data.size());
 
     return realsense_sleep;
 }
