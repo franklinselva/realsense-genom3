@@ -85,6 +85,12 @@ component realsense {
 
     /* ---- Constants ----------------------------------------------------- */
     const unsigned short poll_duration_sec = 1; // duration of each poll before releasing mutex
+    const double base_cov_pos   = 1e-2;     // base for position covariance computation
+    const double base_cov_vel   = 1e-2;     // base for position covariance computation
+    const double base_cov_acc   = 1e-2;     // base for position covariance computation
+    const double base_cov_att   = 1e-4;     // base for attitude covariance computation
+    const double base_cov_avel  = 1e-4;     // base for position covariance computation
+    const double base_cov_aacc  = 1e-4;     // base for position covariance computation
 
     /* ---- Tasks --------------------------------------------------------- */
     task main {

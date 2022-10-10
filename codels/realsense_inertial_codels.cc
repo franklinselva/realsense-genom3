@@ -205,8 +205,9 @@ rs_inertial_main(int16_t compression_rate,
         // Uncertainty is provided by the T265 as two confidence level integers:
         // pose.mapper_confidence: Pose map confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
         // pose.tracker_confidence: Pose confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
-        // Antonio Enrique was using a default covariance (eg 1e-2), scaled by 1e(3-confidence)
-        // any solution would by welcome
+
+        double cov_scale = pow(10,3-pose.tracker_confidence);
+
         port_data->ts.sec = floor(ms/1000);
         port_data->ts.nsec = (ms - (double)port_data->ts.sec*1e3) * 1e6;
 
@@ -214,32 +215,84 @@ rs_inertial_main(int16_t compression_rate,
         port_data->pos._value.x = pose.translation.x;
         port_data->pos._value.y = pose.translation.y;
         port_data->pos._value.z = pose.translation.z;
+        double pos_cov = realsense_base_cov_pos * cov_scale;
+        port_data->pos_cov._present = true;
+        port_data->pos_cov._value.cov[0] = pos_cov;
+        port_data->pos_cov._value.cov[1] = 0;
+        port_data->pos_cov._value.cov[2] = pos_cov;
+        port_data->pos_cov._value.cov[3] = 0;
+        port_data->pos_cov._value.cov[4] = 0;
+        port_data->pos_cov._value.cov[5] = pos_cov;
 
         port_data->att._present = true;
         port_data->att._value.qw = pose.rotation.w;
         port_data->att._value.qx = pose.rotation.x;
         port_data->att._value.qy = pose.rotation.y;
         port_data->att._value.qz = pose.rotation.z;
+        double att_cov = realsense_base_cov_att * cov_scale;
+        port_data->att_cov._present = true;
+        port_data->att_cov._value.cov[0] = att_cov;
+        port_data->att_cov._value.cov[1] = 0;
+        port_data->att_cov._value.cov[2] = att_cov;
+        port_data->att_cov._value.cov[3] = 0;
+        port_data->att_cov._value.cov[4] = 0;
+        port_data->att_cov._value.cov[5] = att_cov;
+        port_data->att_cov._value.cov[6] = 0;
+        port_data->att_cov._value.cov[7] = 0;
+        port_data->att_cov._value.cov[8] = 0;
+        port_data->att_cov._value.cov[9] = att_cov;
 
         port_data->vel._present = true;
         port_data->vel._value.vx = pose.velocity.x;
         port_data->vel._value.vy = pose.velocity.y;
         port_data->vel._value.vz = pose.velocity.z;
+        double vel_cov = realsense_base_cov_vel * cov_scale;
+        port_data->vel_cov._present = true;
+        port_data->vel_cov._value.cov[0] = vel_cov;
+        port_data->vel_cov._value.cov[1] = 0;
+        port_data->vel_cov._value.cov[2] = vel_cov;
+        port_data->vel_cov._value.cov[3] = 0;
+        port_data->vel_cov._value.cov[4] = 0;
+        port_data->vel_cov._value.cov[5] = vel_cov;
 
         port_data->avel._present = true;
         port_data->avel._value.wx = pose.angular_velocity.x;
         port_data->avel._value.wy = pose.angular_velocity.y;
         port_data->avel._value.wz = pose.angular_velocity.z;
+        double avel_cov = realsense_base_cov_avel * cov_scale;
+        port_data->avel_cov._present = true;
+        port_data->avel_cov._value.cov[0] = avel_cov;
+        port_data->avel_cov._value.cov[1] = 0;
+        port_data->avel_cov._value.cov[2] = avel_cov;
+        port_data->avel_cov._value.cov[3] = 0;
+        port_data->avel_cov._value.cov[4] = 0;
+        port_data->avel_cov._value.cov[5] = avel_cov;
 
         port_data->acc._present = true;
         port_data->acc._value.ax = pose.acceleration.x;
         port_data->acc._value.ay = pose.acceleration.y;
         port_data->acc._value.az = pose.acceleration.z;
+        double acc_cov = realsense_base_cov_acc * cov_scale;
+        port_data->acc_cov._present = true;
+        port_data->acc_cov._value.cov[0] = acc_cov;
+        port_data->acc_cov._value.cov[1] = 0;
+        port_data->acc_cov._value.cov[2] = acc_cov;
+        port_data->acc_cov._value.cov[3] = 0;
+        port_data->acc_cov._value.cov[4] = 0;
+        port_data->acc_cov._value.cov[5] = acc_cov;
 
         port_data->aacc._present = true;
         port_data->aacc._value.awx = pose.angular_acceleration.x;
         port_data->aacc._value.awy = pose.angular_acceleration.y;
         port_data->aacc._value.awz = pose.angular_acceleration.z;
+        double aacc_cov = realsense_base_cov_aacc * cov_scale;
+        port_data->aacc_cov._present = true;
+        port_data->aacc_cov._value.cov[0] = aacc_cov;
+        port_data->aacc_cov._value.cov[1] = 0;
+        port_data->aacc_cov._value.cov[2] = aacc_cov;
+        port_data->aacc_cov._value.cov[3] = 0;
+        port_data->aacc_cov._value.cov[4] = 0;
+        port_data->aacc_cov._value.cov[5] = aacc_cov;
 
         odom->write(self);
     }
