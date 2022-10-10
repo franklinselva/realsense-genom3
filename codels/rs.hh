@@ -29,11 +29,6 @@
 
 #include <librealsense2/rs.hpp>
 
-#include <err.h>
-#include <iostream>
-#include <opencv2/opencv.hpp>
-using namespace cv;
-
 
 namespace realsense
 {

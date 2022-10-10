@@ -23,16 +23,10 @@
  */
 #include "rs.hh"
 
-#include <condition_variable>
-#include <mutex>
-
-#include <librealsense2/rs.hpp>
-
 #include <err.h>
-#include <iostream>
-using namespace cv;
 
 
+/* --- Class realsense::camera -------------------------------------------- */
 realsense::camera::camera()
 {
     // Init sync structs with maximum sizes for frame queues

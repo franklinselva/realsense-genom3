@@ -29,10 +29,6 @@
 #include "codels.hh"
 
 #include <err.h>
-#include <cmath>
-#include <sys/time.h>
-
-#include <iostream>
 
 
 /* --- Attribute set_jpeg ----------------------------------------------- */

@@ -30,8 +30,6 @@
 
 #include <err.h>
 #include <cmath>
-#include <opencv2/opencv.hpp>
-using namespace cv;
 
 
 /* --- Task visual ------------------------------------------------------ */
