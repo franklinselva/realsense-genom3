@@ -74,9 +74,13 @@ component realsense {
         or_camera::data i_data; // copy of inertial data
         or_camera::data d_data; // copy of depth data
 
-        undist_s undist;    // undistortion parameters
+        undist_s undist;        // undistortion parameters
 
         boolean registration;   // enable registration of point cloud
+        struct range {    // range for normalization when computing 2D depth image
+            float max;
+            float min;
+        } depth_range;
     };
 
     /* ---- Constants ----------------------------------------------------- */
@@ -117,7 +121,7 @@ component realsense {
     };
 
     task depth {
-        codel<start> rs_depth_start(out pc, out registration)
+        codel<start> rs_depth_start(out pc, out frame, out depth_range, out registration)
             yield sleep;
 
         codel<sleep> rs_depth_sleep(in info.started)
@@ -127,6 +131,9 @@ component realsense {
             yield sleep, main;
 
         codel<main> rs_depth_main(in d_data, in registration, out pc)
+            yield img, sleep;
+
+        codel<img> rs_depth_img(in d_data, in registration, in depth_range, out frame)
             yield sleep;
     };
 
@@ -194,6 +201,9 @@ component realsense {
     };
 
     attribute set_registration(in registration = FALSE : "Enable or disable point cloud registration");
+
+    attribute set_depth_range(in depth_range.min = 0.1 : "Minimum depth (in meter) for normalization when computing 2D depth image",
+                              in depth_range.max = 3. : "Maximum depth (in meter) for normalization when computing 2D depth image");
 
     /* ---- Extrinsics ---------------------------------------------------- */
     activity set_extrinsics(in sequence<float,6> ext_values) {

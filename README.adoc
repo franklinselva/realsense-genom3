@@ -509,6 +509,21 @@ a|.Inputs
 
 '''
 
+[[set_depth_range]]
+=== set_depth_range (attribute)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Inputs
+[disc]
+ * `float` `min` (default `"0.1"`) Minimum depth (in meter) for normalization when computing 2D depth image
+
+ * `float` `max` (default `"3"`) Maximum depth (in meter) for normalization when computing 2D depth image
+
+|===
+
+'''
+
 [[set_extrinsics]]
 === set_extrinsics (activity)
 
@@ -580,6 +595,7 @@ a|.Context
 a|.Context
 [disc]
   * Free running
+* Updates port `<<frame>>`
 * Updates port `<<pc>>`
 |===
 

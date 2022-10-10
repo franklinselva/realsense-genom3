@@ -29,8 +29,6 @@
 #include "codels.hh"
 
 #include <err.h>
-#include <cmath>
-#include <iostream>
 
 
 /* --- Task main -------------------------------------------------------- */

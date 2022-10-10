@@ -30,9 +30,6 @@
 
 #include <err.h>
 #include <cmath>
-#include <sys/time.h>
-
-#include <iostream>
 
 
 /* --- Task inertial ---------------------------------------------------- */
@@ -49,11 +46,8 @@ rs_inertial_start(const realsense_accel *accel,
                   const realsense_odom *odom,
                   const genom_context self)
 {
-    timeval tv;
-    gettimeofday(&tv, NULL);
-
-    accel->data(self)->ts.sec = tv.tv_sec;
-    accel->data(self)->ts.nsec = tv.tv_usec*1000;
+    accel->data(self)->ts.sec = 0;
+    accel->data(self)->ts.nsec = 0;
     accel->data(self)->intrinsic = true;
     accel->data(self)->pos._present = false;
     accel->data(self)->pos_cov._present = false;
@@ -69,8 +63,8 @@ rs_inertial_start(const realsense_accel *accel,
     accel->data(self)->aacc._present = false;
     accel->data(self)->aacc_cov._present = false;
 
-    gyro->data(self)->ts.sec = tv.tv_sec;
-    gyro->data(self)->ts.nsec = tv.tv_usec*1000;
+    gyro->data(self)->ts.sec = 0;
+    gyro->data(self)->ts.nsec = 0;
     gyro->data(self)->intrinsic = true;
     gyro->data(self)->pos._present = false;
     gyro->data(self)->pos_cov._present = false;
@@ -86,8 +80,8 @@ rs_inertial_start(const realsense_accel *accel,
     gyro->data(self)->aacc._present = false;
     gyro->data(self)->aacc_cov._present = false;
 
-    odom->data(self)->ts.sec = tv.tv_sec;
-    odom->data(self)->ts.nsec = tv.tv_usec*1000;
+    odom->data(self)->ts.sec = 0;
+    odom->data(self)->ts.nsec = 0;
     odom->data(self)->intrinsic = true;
     odom->data(self)->pos._present = false;
     odom->data(self)->pos_cov._present = false;
@@ -173,73 +167,76 @@ rs_inertial_main(int16_t compression_rate,
     rs2_stream type = f.get_profile().stream_type();
     if (type == RS2_STREAM_ACCEL)
     {
+        or_pose_estimator_state* port_data = accel->data(self);
         rs2_vector acc = f.as<rs2::motion_frame>().get_motion_data();
 
-        accel->data(self)->ts.sec = floor(ms/1000);
-        accel->data(self)->ts.nsec = (ms - (double)accel->data(self)->ts.sec*1e3) * 1e6;
+        port_data->ts.sec = floor(ms/1000);
+        port_data->ts.nsec = (ms - (double)port_data->ts.sec*1e3) * 1e6;
 
-        accel->data(self)->acc._present = true;
-        accel->data(self)->acc._value.ax = acc.x;
-        accel->data(self)->acc._value.ay = acc.y;
-        accel->data(self)->acc._value.az = acc.z;
+        port_data->acc._present = true;
+        port_data->acc._value.ax = acc.x;
+        port_data->acc._value.ay = acc.y;
+        port_data->acc._value.az = acc.z;
 
         accel->write(self);
     }
     else if (type == RS2_STREAM_GYRO)
     {
+        or_pose_estimator_state* port_data = gyro->data(self);
         rs2_vector avel = f.as<rs2::motion_frame>().get_motion_data();
 
-        gyro->data(self)->ts.sec = floor(ms/1000);
-        gyro->data(self)->ts.nsec = (ms - (double)gyro->data(self)->ts.sec*1e3) * 1e6;
+        port_data->ts.sec = floor(ms/1000);
+        port_data->ts.nsec = (ms - (double)port_data->ts.sec*1e3) * 1e6;
 
-        gyro->data(self)->avel._present = true;
-        gyro->data(self)->avel._value.wx = avel.x;
-        gyro->data(self)->avel._value.wy = avel.y;
-        gyro->data(self)->avel._value.wz = avel.z;
+        port_data->avel._present = true;
+        port_data->avel._value.wx = avel.x;
+        port_data->avel._value.wy = avel.y;
+        port_data->avel._value.wz = avel.z;
 
         gyro->write(self);
     }
     else if (type == RS2_STREAM_POSE)
     {
+        or_pose_estimator_state* port_data = odom->data(self);
         rs2_pose pose = f.as<rs2::pose_frame>().get_pose_data();
         // Uncertainty is provided by the T265 as two confidence level integers:
         // pose.mapper_confidence: Pose map confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
         // pose.tracker_confidence: Pose confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
         // Antonio Enrique was using a default covariance (eg 1e-2), scaled by 1e(3-confidence)
         // any solution would by welcome
-        odom->data(self)->ts.sec = floor(ms/1000);
-        odom->data(self)->ts.nsec = (ms - (double)odom->data(self)->ts.sec*1e3) * 1e6;
+        port_data->ts.sec = floor(ms/1000);
+        port_data->ts.nsec = (ms - (double)port_data->ts.sec*1e3) * 1e6;
 
-        odom->data(self)->pos._present = true;
-        odom->data(self)->pos._value.x = pose.translation.x;
-        odom->data(self)->pos._value.y = pose.translation.y;
-        odom->data(self)->pos._value.z = pose.translation.z;
+        port_data->pos._present = true;
+        port_data->pos._value.x = pose.translation.x;
+        port_data->pos._value.y = pose.translation.y;
+        port_data->pos._value.z = pose.translation.z;
 
-        odom->data(self)->att._present = true;
-        odom->data(self)->att._value.qw = pose.rotation.w;
-        odom->data(self)->att._value.qx = pose.rotation.x;
-        odom->data(self)->att._value.qy = pose.rotation.y;
-        odom->data(self)->att._value.qz = pose.rotation.z;
+        port_data->att._present = true;
+        port_data->att._value.qw = pose.rotation.w;
+        port_data->att._value.qx = pose.rotation.x;
+        port_data->att._value.qy = pose.rotation.y;
+        port_data->att._value.qz = pose.rotation.z;
 
-        odom->data(self)->vel._present = true;
-        odom->data(self)->vel._value.vx = pose.velocity.x;
-        odom->data(self)->vel._value.vy = pose.velocity.y;
-        odom->data(self)->vel._value.vz = pose.velocity.z;
+        port_data->vel._present = true;
+        port_data->vel._value.vx = pose.velocity.x;
+        port_data->vel._value.vy = pose.velocity.y;
+        port_data->vel._value.vz = pose.velocity.z;
 
-        odom->data(self)->avel._present = true;
-        odom->data(self)->avel._value.wx = pose.angular_velocity.x;
-        odom->data(self)->avel._value.wy = pose.angular_velocity.y;
-        odom->data(self)->avel._value.wz = pose.angular_velocity.z;
+        port_data->avel._present = true;
+        port_data->avel._value.wx = pose.angular_velocity.x;
+        port_data->avel._value.wy = pose.angular_velocity.y;
+        port_data->avel._value.wz = pose.angular_velocity.z;
 
-        odom->data(self)->acc._present = true;
-        odom->data(self)->acc._value.ax = pose.acceleration.x;
-        odom->data(self)->acc._value.ay = pose.acceleration.y;
-        odom->data(self)->acc._value.az = pose.acceleration.z;
+        port_data->acc._present = true;
+        port_data->acc._value.ax = pose.acceleration.x;
+        port_data->acc._value.ay = pose.acceleration.y;
+        port_data->acc._value.az = pose.acceleration.z;
 
-        odom->data(self)->aacc._present = true;
-        odom->data(self)->aacc._value.awx = pose.angular_acceleration.x;
-        odom->data(self)->aacc._value.awy = pose.angular_acceleration.y;
-        odom->data(self)->aacc._value.awz = pose.angular_acceleration.z;
+        port_data->aacc._present = true;
+        port_data->aacc._value.awx = pose.angular_acceleration.x;
+        port_data->aacc._value.awy = pose.angular_acceleration.y;
+        port_data->aacc._value.awz = pose.angular_acceleration.z;
 
         odom->write(self);
     }

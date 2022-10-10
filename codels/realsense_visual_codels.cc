@@ -28,14 +28,11 @@
 
 #include "codels.hh"
 
+#include <err.h>
+#include <cmath>
 #include <opencv2/opencv.hpp>
 using namespace cv;
 
-#include <err.h>
-#include <cmath>
-#include <sys/time.h>
-
-#include <iostream>
 
 /* --- Task visual ------------------------------------------------------ */
 
@@ -160,7 +157,7 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
             port_name = "IR_r";
 
         const void* pixel_data;
-        uint16_t w, h, c;
+        uint16_t w, h, bpp;
         // Undistort if requested
         if (undist->enabled && type == RS2_STREAM_FISHEYE)
         {
@@ -176,40 +173,40 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
             pixel_data = cvframe.data;
             w = cvframe.size().height;
             h = cvframe.size().width;
-            c = cvframe.elemSize();
+            bpp = cvframe.elemSize();
         }
         else
         {
             pixel_data = f.get_data();
             w = fv.get_width();
             h = fv.get_height();
-            c = fv.get_bytes_per_pixel();
+            bpp = fv.get_bytes_per_pixel();
         }
 
         // Update port data lenght and reallocate if need be
-        or_sensor_frame* r_data = frame->data(port_name.c_str(), self);
-        if (h*w*c != r_data->pixels._length)
+        or_sensor_frame* port_raw_data = frame->data(port_name.c_str(), self);
+        if (h*w*bpp != port_raw_data->pixels._length)
         {
-            if (h*w*c > r_data->pixels._maximum
-                && genom_sequence_reserve(&(r_data->pixels), h*w*c)  == -1)
+            if (h*w*bpp > port_raw_data->pixels._maximum
+                && genom_sequence_reserve(&(port_raw_data->pixels), h*w*bpp)  == -1)
             {
                 realsense_e_mem_detail d;
                 snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
                 warnx("%s", d.what);
                 return realsense_e_mem(&d,self);
             }
-            r_data->pixels._length = h*w*c;
-            r_data->height = h;
-            r_data->width = w;
-            r_data->bpp = c;
-            r_data->compressed = false;
+            port_raw_data->pixels._length = h*w*bpp;
+            port_raw_data->height = h;
+            port_raw_data->width = w;
+            port_raw_data->bpp = bpp;
+            port_raw_data->compressed = false;
         }
 
         // Copy data on port, update timestamp and write
-        memcpy(r_data->pixels._buffer, pixel_data, r_data->pixels._length);
+        memcpy(port_raw_data->pixels._buffer, pixel_data, port_raw_data->pixels._length);
         double ms = fv.get_timestamp();
-        r_data->ts.sec = floor(ms/1000);
-        r_data->ts.nsec = (ms - (double)r_data->ts.sec*1000) * 1e6;
+        port_raw_data->ts.sec = floor(ms/1000);
+        port_raw_data->ts.nsec = (ms - (double)port_raw_data->ts.sec*1000) * 1e6;
 
         frame->write(port_name.c_str(), self);
 
@@ -223,34 +220,34 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
             Mat cvframe = Mat(
                 Size(w, h),
                 CV_8UC1,
-                r_data->pixels._buffer,
+                port_raw_data->pixels._buffer,
                 Mat::AUTO_STEP
             );
             std::vector<uint8_t> buf;
             imencode(".jpg", cvframe, buf, compression_params);
 
             // Update port data lenght and reallocate if need be
-            or_sensor_frame* c_data = frame->data((port_name + "/jpeg").c_str(), self);
-            if (buf.size() != c_data->pixels._length)
+            or_sensor_frame* port_jpeg_data = frame->data((port_name + "/jpeg").c_str(), self);
+            if (buf.size() != port_jpeg_data->pixels._length)
             {
-                if (buf.size() > c_data->pixels._maximum &&
-                    genom_sequence_reserve(&(c_data->pixels), buf.size())  == -1)
+                if (buf.size() > port_jpeg_data->pixels._maximum &&
+                    genom_sequence_reserve(&(port_jpeg_data->pixels), buf.size())  == -1)
                 {
                     realsense_e_mem_detail d;
                     snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
                     warnx("%s", d.what);
                     return realsense_e_mem(&d,self);
                 }
-                c_data->pixels._length = buf.size();
-                c_data->height = h;
-                c_data->width = w;
-                c_data->bpp = c;
-                c_data->compressed = true;
+                port_jpeg_data->pixels._length = buf.size();
+                port_jpeg_data->height = h;
+                port_jpeg_data->width = w;
+                port_jpeg_data->bpp = bpp;
+                port_jpeg_data->compressed = true;
             }
 
             // Copy data on port, update timestamp and write
-            memcpy(c_data->pixels._buffer, buf.data(), buf.size());
-            c_data->ts = r_data->ts;
+            memcpy(port_jpeg_data->pixels._buffer, buf.data(), buf.size());
+            port_jpeg_data->ts = port_raw_data->ts;
 
             frame->write((port_name + "/jpeg").c_str(), self);
         }
