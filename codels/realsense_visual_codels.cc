@@ -106,10 +106,12 @@ rs_viz_poll(realsense_sync_s **v_sync, or_camera_data **v_data,
     std::unique_lock<std::mutex> lock((*v_sync)->_sync->m);
 
     if (!(*v_sync)->_sync->frames->size())
+    {
         (*v_sync)->_sync->cv.wait_for(lock, std::chrono::duration<int16_t>(realsense_poll_duration_sec));
 
-    if ((*v_sync)->_sync->frames->size() == 0)
-        return realsense_sleep;
+        if (!(*v_sync)->_sync->frames->size())
+            return realsense_sleep;
+    }
 
     rs2::frame f;
     while ((*v_sync)->_sync->frames->size())

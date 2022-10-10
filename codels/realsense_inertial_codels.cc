@@ -133,10 +133,12 @@ rs_inertial_poll(realsense_sync_s **i_sync, or_camera_data **i_data,
     std::unique_lock<std::mutex> lock((*i_sync)->_sync->m);
 
     if (!(*i_sync)->_sync->frames->size())
+    {
         (*i_sync)->_sync->cv.wait_for(lock, std::chrono::duration<int16_t>(realsense_poll_duration_sec));
 
-    if ((*i_sync)->_sync->frames->size() == 0)
-        return realsense_sleep;
+        if (!(*i_sync)->_sync->frames->size())
+            return realsense_sleep;
+    }
 
     rs2::frame f;
     (*i_sync)->_sync->frames->poll_for_frame(&f);

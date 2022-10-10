@@ -89,10 +89,12 @@ rs_depth_poll(realsense_sync_s **d_sync, or_camera_data **d_data,
     std::unique_lock<std::mutex> lock((*d_sync)->_sync->m);
 
     if (!(*d_sync)->_sync->frames->size())
+    {
         (*d_sync)->_sync->cv.wait_for(lock, std::chrono::duration<int16_t>(realsense_poll_duration_sec));
 
-    if ((*d_sync)->_sync->frames->size() == 0)
-        return realsense_sleep;
+        if (!(*d_sync)->_sync->frames->size())
+            return realsense_sleep;
+    }
 
     rs2::frame f;
     while ((*d_sync)->_sync->frames->size())
