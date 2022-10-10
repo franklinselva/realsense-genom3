@@ -25,10 +25,8 @@
 #include "acrealsense.h"
 
 #include "realsense_c_types.h"
-#include "codels.hh"
 
-#include <opencv2/opencv.hpp>
-using namespace cv;
+#include "codels.hh"
 
 #include <err.h>
 #include <cmath>
@@ -68,12 +66,6 @@ rs_start(realsense_ids *ids, const realsense_extrinsics *extrinsics,
     ids->v_data = new or_camera_data();
     ids->i_data = new or_camera_data();
     ids->d_data = new or_camera_data();
-
-    ids->undist = new realsense_undist_s();
-    ids->info.compression_rate = -1;
-    ids->info.frequency = 30;
-    snprintf(ids->info.format, sizeof(ids->info.format), "RGB8");
-    ids->info.size = {1280, 720};
 
     return realsense_ether;
 }

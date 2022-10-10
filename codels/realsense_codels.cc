@@ -26,16 +26,18 @@
 
 #include "realsense_c_types.h"
 
-#include <err.h>
-#include <cstdio>
-#include <iostream>
-
 #include "codels.hh"
 
+#include <err.h>
+#include <cmath>
+#include <sys/time.h>
 
-/* --- Attribute set_compression ---------------------------------------- */
+#include <iostream>
 
-/** Validation codel set_compression_rate of attribute set_compression.
+
+/* --- Attribute set_jpeg ----------------------------------------------- */
+
+/** Validation codel set_compression_rate of attribute set_jpeg.
  *
  * Returns genom_ok.
  * Throws realsense_e_io.

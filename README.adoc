@@ -398,14 +398,14 @@ a|.Inputs
 
 '''
 
-[[set_compression]]
-=== set_compression (attribute)
+[[set_jpeg]]
+=== set_jpeg (attribute)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
 a|.Inputs
 [disc]
- * `short` `compression_rate` (default `"-1"`) Image JPEG compression (0-100); -1 to disable.
+ * `short` `compression_rate` (default `"-1"`) Image JPEG compression level (0-100); -1 to disable.
 
 a|.Throws
 [disc]

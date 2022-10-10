@@ -89,7 +89,7 @@ component realsense {
     };
 
     task visual {
-        codel<start> rs_viz_start(out frame)
+        codel<start> rs_viz_start(out frame, out undist, out info)
             yield sleep;
 
         codel<sleep> rs_viz_sleep(in info.started)

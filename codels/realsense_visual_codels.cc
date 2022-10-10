@@ -46,8 +46,15 @@ using namespace cv;
  * Yields to realsense_sleep.
  */
 genom_event
-rs_viz_start(const realsense_frame *frame, const genom_context self)
+rs_viz_start(const realsense_frame *frame, realsense_undist_s **undist,
+             or_camera_info *info, const genom_context self)
 {
+    *undist = new realsense_undist_s();
+    info->compression_rate = -1;
+    info->frequency = 30;
+    snprintf(info->format, sizeof(info->format), "RGB8");
+    info->size = {1280, 720};
+
     frame->open("FE_l", self);
     frame->open("FE_l/jpeg", self);
     frame->open("FE_r", self);
