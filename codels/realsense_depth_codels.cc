@@ -44,12 +44,15 @@
  * Yields to realsense_sleep.
  */
 genom_event
-rs_depth_start(const realsense_pc *pc, const genom_context self)
+rs_depth_start(const realsense_pc *pc, bool *registration,
+               const genom_context self)
 {
     pc->open("depth", self);
     (void) genom_sequence_reserve(&(pc->data("depth", self)->points), 0);
     (void) genom_sequence_reserve(&(pc->data("depth", self)->colors._value), 0);
     pc->data("depth", self)->colors._present = false;
+
+    *registration = false;
 
     return realsense_sleep;
 }
@@ -88,8 +91,11 @@ rs_depth_poll(realsense_sync_s **d_sync, or_camera_data **d_data,
         return realsense_sleep;
 
     rs2::frame f;
-    (*d_sync)->_sync->frames->poll_for_frame(&f);
-    (*d_data)->_data.enqueue(f);
+    while ((*d_sync)->_sync->frames->size())
+    {
+        (*d_sync)->_sync->frames->poll_for_frame(&f);
+        (*d_data)->_data.enqueue(f);
+    }
 
     lock.unlock();
 
@@ -109,12 +115,14 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
     rs2::frame f;
     d_data->_data.poll_for_frame(&f);
 
-    // Get points from frame
     rs2::pointcloud rs_pc;
-    rs2::points points = rs_pc.calculate(f);
 
-    // Map pc to color frame for registration
-    // rs_pc.map_to(data->rgb);
+    // // Map pc to color frame for registration
+    // if (registration)
+    //     rs_pc.map_to(rgb);
+
+    // Get points and texture from frame
+    rs2::points points = rs_pc.calculate(f);
 
     if (points.size())
     {
@@ -151,12 +159,33 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
 
         // Copy data on port, update timestamp and write
         const rs2::vertex* vertices = points.get_vertices();
+        // // Setup values needed to compute point colors from pixels
         // const rs2::texture_coordinate* text_coords = points.get_texture_coordinates();
+        // uint16_t w = 0 , bpp = 0;
+        // const uint8_t* color_data = NULL;
+        // uint32_t x, y, p;
+        // if (registration)
+        // {
+        //     w = rgb.as<rs2::video_frame>().get_width();
+        //     bpp = rgb.as<rs2::video_frame>().get_bytes_per_pixel();
+        //     color_data = (const uint8_t*) rgb.get_data();
+        // }
         for (uint32_t i = 0; i < points.size(); i++)
         {
             d_data->points._buffer[i].x = vertices[i].x;
             d_data->points._buffer[i].y = vertices[i].y;
             d_data->points._buffer[i].z = vertices[i].z;
+
+            // if (registration)
+            // {
+            //     x = static_cast<uint32_t>(text_coords[i].u * w);
+            //     y = static_cast<uint32_t>(text_coords[i].v * w);
+            //     p = (y * w + x) * bpp;
+            //     memcpy(&d_data->colors._value._buffer[i], &color_data[p], bpp);
+            //     // d_data->colors._value._buffer[i].r = color_data[p];
+            //     // d_data->colors._value._buffer[i].g = color_data[p+1];
+            //     // d_data->colors._value._buffer[i].b = color_data[p+2];
+            // }
         }
 
         // Copy data on port, update timestamp and write

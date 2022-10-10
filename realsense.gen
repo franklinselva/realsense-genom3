@@ -117,7 +117,7 @@ component realsense {
     };
 
     task depth {
-        codel<start> rs_depth_start(out pc)
+        codel<start> rs_depth_start(out pc, out registration)
             yield sleep;
 
         codel<sleep> rs_depth_sleep(in info.started)

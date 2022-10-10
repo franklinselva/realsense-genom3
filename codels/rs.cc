@@ -36,9 +36,9 @@ using namespace cv;
 realsense::camera::camera()
 {
     // Init sync structs with maximum sizes for frame queues
-    v_sync.init(2);
-    i_sync.init(1);
-    d_sync.init(1);
+    v_sync.init(2); // color / FE left+right / IR left+right
+    i_sync.init(1); // odometry / accelerometer / gyroscope
+    d_sync.init(1); // pointcloud
 }
 
 realsense::camera::~camera() { this->stop(); }
