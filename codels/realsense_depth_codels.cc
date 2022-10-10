@@ -29,6 +29,7 @@
 #include "codels.hh"
 
 #include <err.h>
+#include <chrono>
 #include <cmath>
 
 
@@ -218,8 +219,6 @@ rs_depth_img(const or_camera_data *d_data, bool registration,
              const realsense_ids_range *depth_range,
              const realsense_frame *frame, const genom_context self)
 {
-std::chrono::time_point<std::chrono::system_clock> start, end;
-start = std::chrono::system_clock::now();
     rs2::frame f;
     d_data->_data.poll_for_frame(&f);
 
@@ -261,8 +260,6 @@ start = std::chrono::system_clock::now();
     port_data->ts.nsec = (ms - (double)port_data->ts.sec*1000) * 1e6;
 
     frame->write("depth", self);
-end = std::chrono::system_clock::now();
-std::chrono::duration<double> elapsed_seconds = end - start;
-std::cout << "2Dgen: " << elapsed_seconds.count() << "s\n";
+
     return realsense_sleep;
 }
