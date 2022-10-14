@@ -398,6 +398,22 @@ a|.Inputs
 
 '''
 
+[[list_devices]]
+=== list_devices (activity)
+
+[role="small", width="50%", float="right", cols="1"]
+|===
+a|.Outputs
+[disc]
+ * `sequence< string >` `names` List of names of available devices.
+
+a|.Context
+[disc]
+  * In task `<<main>>`
+|===
+
+'''
+
 [[set_jpeg]]
 === set_jpeg (attribute)
 

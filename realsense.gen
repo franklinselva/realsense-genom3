@@ -176,6 +176,13 @@ component realsense {
         codel enable_streams_d435(in info, in color, in depth, in infrared, in accelerometer, in gyroscope, inout pipe);
     };
 
+    activity list_devices(out sequence<string> names = : "List of names of available devices.") {
+        task main;
+
+        codel<start> list_devices(in pipe, out names)
+            yield ether;
+    };
+
     /* ---- Camera setting ------------------------------------------------ */
     attribute set_jpeg(in info.compression_rate = -1 : "Image JPEG compression level (0-100); -1 to disable.") {
         throw e_io;

@@ -181,6 +181,40 @@ rs_disconnect(or_camera_pipe **pipe, bool *started,
 }
 
 
+/* --- Activity list_devices -------------------------------------------- */
+
+/** Codel list_devices of activity list_devices.
+ *
+ * Triggered by realsense_start.
+ * Yields to realsense_ether.
+ */
+genom_event
+list_devices(const or_camera_pipe *pipe, sequence_string *names,
+             const genom_context self)
+{
+    rs2::context ctx;
+    rs2::device_list devices = ctx.query_devices();
+
+    (void) genom_sequence_reserve(names, devices.size());
+    names->_length = devices.size();
+
+    warnx("%s", "list of devices:");
+    for (uint16_t i = 0; i<devices.size(); i++)
+    {
+        std::string name = "Unknown Device";
+        if (devices[i].supports(RS2_CAMERA_INFO_NAME))
+            name = devices[i].get_info(RS2_CAMERA_INFO_NAME);
+        std::string sn = "###";
+        if (devices[i].supports(RS2_CAMERA_INFO_SERIAL_NUMBER))
+            sn = devices[i].get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
+        warnx("%s: #%s", name.c_str(), sn.c_str());
+        snprintf(names->_buffer[i], sn.length(), "%s", sn.c_str());
+    }
+
+    return realsense_ether;
+}
+
+
 /* --- Activity set_extrinsics ------------------------------------------ */
 
 /** Codel rs_set_extrinsics of activity set_extrinsics.
