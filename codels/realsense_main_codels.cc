@@ -189,14 +189,14 @@ rs_disconnect(or_camera_pipe **pipe, bool *started,
  * Yields to realsense_ether.
  */
 genom_event
-list_devices(const or_camera_pipe *pipe, sequence_string *names,
+list_devices(const or_camera_pipe *pipe, sequence_string *serial,
              const genom_context self)
 {
     rs2::context ctx;
     rs2::device_list devices = ctx.query_devices();
 
-    (void) genom_sequence_reserve(names, devices.size());
-    names->_length = devices.size();
+    (void) genom_sequence_reserve(serial, devices.size());
+    serial->_length = devices.size();
 
     warnx("%s", "list of devices:");
     for (uint16_t i = 0; i<devices.size(); i++)
@@ -208,7 +208,8 @@ list_devices(const or_camera_pipe *pipe, sequence_string *names,
         if (devices[i].supports(RS2_CAMERA_INFO_SERIAL_NUMBER))
             sn = devices[i].get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
         warnx("%s: #%s", name.c_str(), sn.c_str());
-        snprintf(names->_buffer[i], sn.length(), "%s", sn.c_str());
+        serial->_buffer[i] = new char();
+        snprintf(serial->_buffer[i], sizeof(char)*sn.length(), "%s", sn.c_str());
     }
 
     return realsense_ether;

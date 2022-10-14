@@ -405,7 +405,7 @@ a|.Inputs
 |===
 a|.Outputs
 [disc]
- * `sequence< string >` `names` List of names of available devices.
+ * `sequence< string >` `serial` List of serial of available devices.
 
 a|.Context
 [disc]

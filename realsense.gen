@@ -176,10 +176,10 @@ component realsense {
         codel enable_streams_d435(in info, in color, in depth, in infrared, in accelerometer, in gyroscope, inout pipe);
     };
 
-    activity list_devices(out sequence<string> names = : "List of names of available devices.") {
+    activity list_devices(out sequence<string> serial = : "List of serial of available devices.") {
         task main;
 
-        codel<start> list_devices(in pipe, out names)
+        codel<start> list_devices(in pipe, out serial)
             yield ether;
     };
 
