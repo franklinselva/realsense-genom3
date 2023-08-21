@@ -25,7 +25,6 @@
 
 #include <err.h>
 
-
 /* --- Class realsense::camera -------------------------------------------- */
 realsense::camera::camera()
 {
@@ -37,7 +36,6 @@ realsense::camera::camera()
 
 realsense::camera::~camera() { this->stop(); }
 
-
 void realsense::camera::init(rs2::device dev)
 {
     if (_sensors.size() == 0)
@@ -46,19 +44,16 @@ void realsense::camera::init(rs2::device dev)
     }
 }
 
-
 void realsense::camera::add_stream(realsense::stream s)
 {
     _stream_desired.push_back(s);
 }
-
 
 void realsense::camera::clear_streams()
 {
     _stream_desired.clear();
     _intr = rs2_intrinsics();
 }
-
 
 void realsense::camera::start()
 {
@@ -73,8 +68,8 @@ void realsense::camera::start()
                     sp.format() == stream_d.format &&
                     sp.fps() == stream_d.freq &&
                     (!sp.is<rs2::video_stream_profile>() ||
-                    (sp.as<rs2::video_stream_profile>().width() == stream_d.w &&
-                    sp.as<rs2::video_stream_profile>().height() == stream_d.h)))
+                     (sp.as<rs2::video_stream_profile>().width() == stream_d.w &&
+                      sp.as<rs2::video_stream_profile>().height() == stream_d.h)))
                 {
                     enabled.push_back(sp);
                     if (sp.stream_type() == RS2_STREAM_COLOR || sp.stream_type() == RS2_STREAM_FISHEYE)
@@ -87,27 +82,28 @@ void realsense::camera::start()
             s.open(enabled);
 
             // callback referenced in a C++11 lambda and passed to start()
-            s.start([&](rs2::frame f) { this->_callback(f); });
+            s.start([&](rs2::frame f)
+                    { this->_callback(f); });
         }
     }
 }
-
 
 void realsense::camera::stop()
 {
     for (rs2::sensor s : _sensors)
     {
-        try {
+        try
+        {
             s.stop();
             s.close();
         }
-        catch (rs2::error& e) {
+        catch (rs2::error &e)
+        {
             // warnx("rs error in stop: %s", e.what());
         } // catch exception for sensor not opened/streaming
     }
     _sensors.clear();
 }
-
 
 // Realsense frame callback function
 void realsense::camera::_callback(rs2::frame f)

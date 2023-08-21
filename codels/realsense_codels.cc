@@ -30,7 +30,6 @@
 
 #include <err.h>
 
-
 /* --- Attribute set_jpeg ----------------------------------------------- */
 
 /** Validation codel set_compression_rate of attribute set_jpeg.
@@ -49,11 +48,10 @@ set_compression_rate(int16_t compression_rate,
         realsense_e_io_detail d;
         snprintf(d.what, sizeof(d.what), "compression rate not allowed: %d", compression_rate);
         warnx("io error: %s", d.what);
-        return realsense_e_io(&d,self);
+        return realsense_e_io(&d, self);
     }
     return genom_ok;
 }
-
 
 /* --- Attribute set_format --------------------------------------------- */
 
@@ -65,22 +63,21 @@ set_compression_rate(int16_t compression_rate,
 genom_event
 set_format(const char format[8], const genom_context self)
 {
-    if (!strcmp(format,"YUYV") ||
-        !strcmp(format,"RGB8") ||
-        !strcmp(format,"RGBA8") ||
-        !strcmp(format,"BGR8") ||
-        !strcmp(format,"BGRA8") ||
-        !strcmp(format,"Y16"))
+    if (!strcmp(format, "YUYV") ||
+        !strcmp(format, "RGB8") ||
+        !strcmp(format, "RGBA8") ||
+        !strcmp(format, "BGR8") ||
+        !strcmp(format, "BGRA8") ||
+        !strcmp(format, "Y16"))
         return genom_ok;
     else
     {
         realsense_e_io_detail d;
         snprintf(d.what, sizeof(d.what), "format not allowed: %s ", format);
         warnx("io error: %s", d.what);
-        return realsense_e_io(&d,self);
+        return realsense_e_io(&d, self);
     }
 }
-
 
 /* --- Attribute set_fps ------------------------------------------------ */
 
@@ -97,7 +94,7 @@ set_fps(uint16_t frequency, uint16_t w, const genom_context self)
         realsense_e_io_detail d;
         snprintf(d.what, sizeof(d.what), "%s", "60Hz only allowed below 1280x720");
         warnx("io error: %s", d.what);
-        return realsense_e_io(&d,self);
+        return realsense_e_io(&d, self);
     }
     if (frequency != 6 &&
         frequency != 15 &&
@@ -107,11 +104,10 @@ set_fps(uint16_t frequency, uint16_t w, const genom_context self)
         realsense_e_io_detail d;
         snprintf(d.what, sizeof(d.what), "frequency not allowed: %d", frequency);
         warnx("io error: %s", d.what);
-        return realsense_e_io(&d,self);
+        return realsense_e_io(&d, self);
     }
     return genom_ok;
 }
-
 
 /* --- Attribute set_size ----------------------------------------------- */
 
@@ -137,10 +133,9 @@ set_size(const or_camera_info_size_s *size, const genom_context self)
         realsense_e_io_detail d;
         snprintf(d.what, sizeof(d.what), "format not allowed: %dx%d", size->w, size->h);
         warnx("io error: %s", d.what);
-        return realsense_e_io(&d,self);
+        return realsense_e_io(&d, self);
     }
 }
-
 
 /* --- Function enable_streams_t265 ------------------------------------- */
 
@@ -156,28 +151,27 @@ enable_streams_t265(bool fisheye, bool odometry, bool accelerometer,
     (*pipe)->cam->clear_streams();
     if (fisheye)
     {
-        realsense::stream fe {RS2_STREAM_FISHEYE, RS2_FORMAT_Y8, 30, 848, 800};
+        realsense::stream fe{RS2_STREAM_FISHEYE, RS2_FORMAT_Y8, 30, 848, 800};
         (*pipe)->cam->add_stream(fe);
     }
     if (odometry)
     {
-        realsense::stream pose {RS2_STREAM_POSE, RS2_FORMAT_6DOF, 200, 0, 0};
+        realsense::stream pose{RS2_STREAM_POSE, RS2_FORMAT_6DOF, 200, 0, 0};
         (*pipe)->cam->add_stream(pose);
     }
     if (accelerometer)
     {
-        realsense::stream accel {RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 62, 0,0};
+        realsense::stream accel{RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 62, 0, 0};
         (*pipe)->cam->add_stream(accel);
     }
     if (gyroscope)
     {
-        realsense::stream gyro {RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F, 200, 0,0};
+        realsense::stream gyro{RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F, 200, 0, 0};
         (*pipe)->cam->add_stream(gyro);
     }
 
     return genom_ok;
 }
-
 
 /* --- Function enable_streams_d435 ------------------------------------- */
 
@@ -194,33 +188,39 @@ enable_streams_d435(const or_camera_info *info, bool color, bool depth,
     if (color)
     {
         rs2_format format = RS2_FORMAT_ANY;
-        if (!strcmp(info->format,"YUYV")) format = RS2_FORMAT_YUYV;
-        else if (!strcmp(info->format,"RGB8")) format = RS2_FORMAT_RGB8;
-        else if (!strcmp(info->format,"RGBA8")) format = RS2_FORMAT_RGBA8;
-        else if (!strcmp(info->format,"BGR8")) format = RS2_FORMAT_BGR8;
-        else if (!strcmp(info->format,"BGRA8")) format = RS2_FORMAT_BGRA8;
-        else if (!strcmp(info->format,"Y16")) format = RS2_FORMAT_Y16;
-        realsense::stream color {RS2_STREAM_COLOR, format, info->frequency, info->size.w, info->size.h};
+        if (!strcmp(info->format, "YUYV"))
+            format = RS2_FORMAT_YUYV;
+        else if (!strcmp(info->format, "RGB8"))
+            format = RS2_FORMAT_RGB8;
+        else if (!strcmp(info->format, "RGBA8"))
+            format = RS2_FORMAT_RGBA8;
+        else if (!strcmp(info->format, "BGR8"))
+            format = RS2_FORMAT_BGR8;
+        else if (!strcmp(info->format, "BGRA8"))
+            format = RS2_FORMAT_BGRA8;
+        else if (!strcmp(info->format, "Y16"))
+            format = RS2_FORMAT_Y16;
+        realsense::stream color{RS2_STREAM_COLOR, format, info->frequency, info->size.w, info->size.h};
         (*pipe)->cam->add_stream(color);
     }
     if (depth)
     {
-        realsense::stream depth {RS2_STREAM_DEPTH, RS2_FORMAT_Z16, 30, 848, 480};
+        realsense::stream depth{RS2_STREAM_DEPTH, RS2_FORMAT_Z16, 30, 848, 480};
         (*pipe)->cam->add_stream(depth);
     }
     if (infrared)
     {
-        realsense::stream ir {RS2_STREAM_INFRARED, RS2_FORMAT_Y8, 30, 848, 480};
+        realsense::stream ir{RS2_STREAM_INFRARED, RS2_FORMAT_Y8, 30, 848, 480};
         (*pipe)->cam->add_stream(ir);
     }
     if (accelerometer)
     {
-        realsense::stream accel {RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 63, 0,0};
+        realsense::stream accel{RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F, 63, 0, 0};
         (*pipe)->cam->add_stream(accel);
     }
     if (gyroscope)
     {
-        realsense::stream gyro {RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F, 200, 0,0};
+        realsense::stream gyro{RS2_STREAM_GYRO, RS2_FORMAT_MOTION_XYZ32F, 200, 0, 0};
         (*pipe)->cam->add_stream(gyro);
     }
 

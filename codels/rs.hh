@@ -29,7 +29,6 @@
 
 #include <librealsense2/rs.hpp>
 
-
 namespace realsense
 {
     struct stream
@@ -43,8 +42,8 @@ namespace realsense
 
     struct sync
     {
-        rs2::frame_queue*       frames;
-        std::mutex              m;
+        rs2::frame_queue *frames;
+        std::mutex m;
         std::condition_variable cv;
 
         void init(uint16_t size) { frames = new rs2::frame_queue(size, true); }
@@ -53,14 +52,14 @@ namespace realsense
 
     class camera
     {
-        private:
-        std::vector<realsense::stream>  _stream_desired;
-        std::vector<rs2::sensor>        _sensors;
+    private:
+        std::vector<realsense::stream> _stream_desired;
+        std::vector<rs2::sensor> _sensors;
 
-        void _callback(rs2::frame f);    // callback function
+        void _callback(rs2::frame f); // callback function
 
-        public:
-        rs2_intrinsics  _intr;  // intrinsics calibration of video stream (FE / Color)
+    public:
+        rs2_intrinsics _intr; // intrinsics calibration of video stream (FE / Color)
 
         realsense::sync v_sync;
         realsense::sync i_sync;

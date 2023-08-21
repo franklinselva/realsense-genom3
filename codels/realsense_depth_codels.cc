@@ -32,9 +32,7 @@
 #include <chrono>
 #include <cmath>
 
-
 /* --- Task depth ------------------------------------------------------- */
-
 
 /** Codel rs_depth_start of task depth.
  *
@@ -47,8 +45,8 @@ rs_depth_start(const realsense_pc *pc, const realsense_frame *frame,
                const genom_context self)
 {
     pc->open("depth", self);
-    (void) genom_sequence_reserve(&(pc->data("depth", self)->points), 0);
-    (void) genom_sequence_reserve(&(pc->data("depth", self)->colors._value), 0);
+    (void)genom_sequence_reserve(&(pc->data("depth", self)->points), 0);
+    (void)genom_sequence_reserve(&(pc->data("depth", self)->colors._value), 0);
     pc->data("depth", self)->colors._present = false;
 
     *registration = false;
@@ -56,11 +54,10 @@ rs_depth_start(const realsense_pc *pc, const realsense_frame *frame,
     depth_range->max = 3.;
 
     frame->open("depth", self);
-    (void) genom_sequence_reserve(&(frame->data("depth", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("depth", self)->pixels), 0);
 
     return realsense_sleep;
 }
-
 
 /** Codel rs_depth_sleep of task depth.
  *
@@ -75,7 +72,6 @@ rs_depth_sleep(bool started, const genom_context self)
     else
         return realsense_poll;
 }
-
 
 /** Codel rs_depth_poll of task depth.
  *
@@ -108,7 +104,6 @@ rs_depth_poll(realsense_sync_s **d_sync, or_camera_data **d_data,
     return realsense_main;
 }
 
-
 /** Codel rs_depth_main of task depth.
  *
  * Triggered by realsense_main.
@@ -133,16 +128,16 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
     if (points.size())
     {
         // Update port data lenght and reallocate if need be
-        or_sensor_pc* port_data = pc->data("depth", self);
+        or_sensor_pc *port_data = pc->data("depth", self);
         if (points.size() != port_data->points._length)
         {
             if (points.size() > port_data->points._maximum)
             {
-                if (genom_sequence_reserve(&(port_data->points), points.size())  == -1)
+                if (genom_sequence_reserve(&(port_data->points), points.size()) == -1)
                 {
                     realsense_e_mem_detail d;
                     snprintf(d.what, sizeof(d.what), "unable to allocate 3d point memory");
-                    return realsense_e_mem(&d,self);
+                    return realsense_e_mem(&d, self);
                 }
                 // if (registration && genom_sequence_reserve(&(port_data->colors._value), points.size())  == -1)
                 // {
@@ -164,7 +159,7 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
         }
 
         // Copy data on port, update timestamp and write
-        const rs2::vertex* vertices = points.get_vertices();
+        const rs2::vertex *vertices = points.get_vertices();
         // // Setup values needed to compute point colors from pixels
         // const rs2::texture_coordinate* text_coords = points.get_texture_coordinates();
         // uint16_t w = 0 , bpp = 0;
@@ -196,8 +191,8 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
 
         // Copy data on port, update timestamp and write
         double ms = f.get_timestamp();
-        port_data->ts.sec = floor(ms/1000);
-        port_data->ts.nsec = (ms - (double)port_data->ts.sec*1000) * 1e6;
+        port_data->ts.sec = floor(ms / 1000);
+        port_data->ts.nsec = (ms - (double)port_data->ts.sec * 1000) * 1e6;
 
         pc->write("depth", self);
 
@@ -209,7 +204,6 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
 
     return realsense_sleep;
 }
-
 
 /** Codel rs_depth_img of task depth.
  *
@@ -224,24 +218,23 @@ rs_depth_img(const or_camera_data *d_data, bool registration,
     rs2::frame f;
     d_data->_data.poll_for_frame(&f);
 
-    or_sensor_frame* port_data = frame->data("depth", self);
+    or_sensor_frame *port_data = frame->data("depth", self);
 
     // Generate 2D image for display
     uint16_t w = f.as<rs2::video_frame>().get_width();
     uint16_t h = f.as<rs2::video_frame>().get_height();
     uint16_t bpp = 1; // grayscale only for now
 
-    if (h*w*bpp != port_data->pixels._length)
+    if (h * w * bpp != port_data->pixels._length)
     {
-        if (h*w*bpp > port_data->pixels._maximum
-            && genom_sequence_reserve(&(port_data->pixels), h*w*bpp)  == -1)
+        if (h * w * bpp > port_data->pixels._maximum && genom_sequence_reserve(&(port_data->pixels), h * w * bpp) == -1)
         {
             realsense_e_mem_detail d;
             snprintf(d.what, sizeof(d.what), "unable to allocate depth img frame memory");
             warnx("%s", d.what);
-            return realsense_e_mem(&d,self);
+            return realsense_e_mem(&d, self);
         }
-        port_data->pixels._length = h*w*bpp;
+        port_data->pixels._length = h * w * bpp;
         port_data->height = h;
         port_data->width = w;
         port_data->bpp = bpp;
@@ -250,16 +243,16 @@ rs_depth_img(const or_camera_data *d_data, bool registration,
 
     // memcpy(port_data->pixels._buffer, f.get_data(), port_data->pixels._length);
     rs2::depth_frame df = f.as<rs2::depth_frame>();
-    for (uint16_t x=0; x<w; x++)
-    for (uint16_t y=0; y<h; y++)
-    {
-        float d = max(min(df.get_distance(x,y), depth_range->max), depth_range->min);
-        port_data->pixels._buffer[y*w+x] = static_cast<uint8_t>((d-depth_range->min)/(depth_range->max-depth_range->min)*255);
-    }
+    for (uint16_t x = 0; x < w; x++)
+        for (uint16_t y = 0; y < h; y++)
+        {
+            float d = max(min(df.get_distance(x, y), depth_range->max), depth_range->min);
+            port_data->pixels._buffer[y * w + x] = static_cast<uint8_t>((d - depth_range->min) / (depth_range->max - depth_range->min) * 255);
+        }
 
     double ms = f.get_timestamp();
-    port_data->ts.sec = floor(ms/1000);
-    port_data->ts.nsec = (ms - (double)port_data->ts.sec*1000) * 1e6;
+    port_data->ts.sec = floor(ms / 1000);
+    port_data->ts.nsec = (ms - (double)port_data->ts.sec * 1000) * 1e6;
 
     frame->write("depth", self);
 

@@ -32,9 +32,7 @@
 #include <chrono>
 #include <cmath>
 
-
 /* --- Task inertial ---------------------------------------------------- */
-
 
 /** Codel rs_inertial_start of task inertial.
  *
@@ -105,7 +103,6 @@ rs_inertial_start(const realsense_accel *accel,
     return realsense_sleep;
 }
 
-
 /** Codel rs_inertial_sleep of task inertial.
  *
  * Triggered by realsense_sleep.
@@ -119,7 +116,6 @@ rs_inertial_sleep(bool started, const genom_context self)
     else
         return realsense_poll;
 }
-
 
 /** Codel rs_inertial_poll of task inertial.
  *
@@ -149,7 +145,6 @@ rs_inertial_poll(realsense_sync_s **i_sync, or_camera_data **i_data,
     return realsense_main;
 }
 
-
 /** Codel rs_inertial_main of task inertial.
  *
  * Triggered by realsense_main.
@@ -170,11 +165,11 @@ rs_inertial_main(int16_t compression_rate,
     rs2_stream type = f.get_profile().stream_type();
     if (type == RS2_STREAM_ACCEL)
     {
-        or_pose_estimator_state* port_data = accel->data(self);
+        or_pose_estimator_state *port_data = accel->data(self);
         rs2_vector acc = f.as<rs2::motion_frame>().get_motion_data();
 
-        port_data->ts.sec = floor(ms/1000);
-        port_data->ts.nsec = (ms - (double)port_data->ts.sec*1e3) * 1e6;
+        port_data->ts.sec = floor(ms / 1000);
+        port_data->ts.nsec = (ms - (double)port_data->ts.sec * 1e3) * 1e6;
 
         port_data->acc._present = true;
         port_data->acc._value.ax = acc.x;
@@ -185,11 +180,11 @@ rs_inertial_main(int16_t compression_rate,
     }
     else if (type == RS2_STREAM_GYRO)
     {
-        or_pose_estimator_state* port_data = gyro->data(self);
+        or_pose_estimator_state *port_data = gyro->data(self);
         rs2_vector avel = f.as<rs2::motion_frame>().get_motion_data();
 
-        port_data->ts.sec = floor(ms/1000);
-        port_data->ts.nsec = (ms - (double)port_data->ts.sec*1e3) * 1e6;
+        port_data->ts.sec = floor(ms / 1000);
+        port_data->ts.nsec = (ms - (double)port_data->ts.sec * 1e3) * 1e6;
 
         port_data->avel._present = true;
         port_data->avel._value.wx = avel.x;
@@ -200,16 +195,16 @@ rs_inertial_main(int16_t compression_rate,
     }
     else if (type == RS2_STREAM_POSE)
     {
-        or_pose_estimator_state* port_data = odom->data(self);
+        or_pose_estimator_state *port_data = odom->data(self);
         rs2_pose pose = f.as<rs2::pose_frame>().get_pose_data();
         // Uncertainty is provided by the T265 as two confidence level integers:
         // pose.mapper_confidence: Pose map confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
         // pose.tracker_confidence: Pose confidence 0 - Failed, 1 - Low, 2 - Medium, 3 - High
 
-        double cov_scale = pow(10,3-pose.tracker_confidence);
+        double cov_scale = pow(10, 3 - pose.tracker_confidence);
 
-        port_data->ts.sec = floor(ms/1000);
-        port_data->ts.nsec = (ms - (double)port_data->ts.sec*1e3) * 1e6;
+        port_data->ts.sec = floor(ms / 1000);
+        port_data->ts.nsec = (ms - (double)port_data->ts.sec * 1e3) * 1e6;
 
         port_data->pos._present = true;
         port_data->pos._value.x = pose.translation.x;

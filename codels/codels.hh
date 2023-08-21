@@ -33,17 +33,19 @@ using namespace cv;
 
 #include "rs.hh"
 
-
-struct or_camera_data {
+struct or_camera_data
+{
     rs2::frame_queue _data = rs2::frame_queue(2, true);
 };
 
-struct realsense_sync_s {
-    realsense::sync* _sync;
+struct realsense_sync_s
+{
+    realsense::sync *_sync;
 };
 
-struct or_camera_pipe {
-    realsense::camera* cam;
+struct or_camera_pipe
+{
+    realsense::camera *cam;
 
     or_camera_pipe() { cam = new realsense::camera(); }
     ~or_camera_pipe() { delete cam; }
@@ -51,7 +53,8 @@ struct or_camera_pipe {
     void init(rs2::device dev) { cam->init(dev); }
 };
 
-struct realsense_undist_s {
+struct realsense_undist_s
+{
     bool enabled;
     Mat m1, m2;
 };

@@ -30,9 +30,7 @@
 
 #include <err.h>
 
-
 /* --- Task main -------------------------------------------------------- */
-
 
 /** Codel rs_start of task main.
  *
@@ -45,7 +43,7 @@ rs_start(realsense_ids *ids, const realsense_extrinsics *extrinsics,
          const realsense_frame *frame, const realsense_pc *pc,
          const genom_context self)
 {
-    *extrinsics->data(self) = {0,0,0,0,0,0};
+    *extrinsics->data(self) = {0, 0, 0, 0, 0, 0};
     extrinsics->write(self);
     *intrinsics->data(self) = {
         .calib = {0, 0, 0, 0, 0},
@@ -67,7 +65,6 @@ rs_start(realsense_ids *ids, const realsense_extrinsics *extrinsics,
 
     return realsense_ether;
 }
-
 
 /* --- Activity connect ------------------------------------------------- */
 
@@ -94,26 +91,26 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
         realsense_e_io_detail d;
         snprintf(d.what, sizeof(d.what), "no rs device connected");
         warnx("%s", d.what);
-        return realsense_e_io(&d,self);
+        return realsense_e_io(&d, self);
     }
 
     rs2::device device_des;
-    if (!strcmp(serial,"\0") || !strcmp(serial,"0"))
+    if (!strcmp(serial, "\0") || !strcmp(serial, "0"))
         device_des = devices[0];
     else
-        for (uint16_t i = 0; i<devices.size(); i++)
+        for (uint16_t i = 0; i < devices.size(); i++)
         {
             if (!strcmp(serial, devices[i].get_info(RS2_CAMERA_INFO_SERIAL_NUMBER)))
             {
                 device_des = devices[i];
                 break;
             }
-            if (i == devices.size()-1)
+            if (i == devices.size() - 1)
             {
                 realsense_e_io_detail d;
                 snprintf(d.what, sizeof(d.what), "rs device with serial %s not connected", serial);
                 warnx("%s", d.what);
-                return realsense_e_io(&d,self);
+                return realsense_e_io(&d, self);
             }
         }
 
@@ -132,7 +129,7 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
     (*pipe)->cam->start();
 
     // Init intrinsics port if COLOR or FISHEYE is enabled
-    rs2_intrinsics* intr = &(*pipe)->cam->_intr;
+    rs2_intrinsics *intr = &(*pipe)->cam->_intr;
     if (intr->width != 0)
     {
         *intrinsics->data(self) = {
@@ -157,9 +154,7 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
     *started = true;
 
     return realsense_ether;
-
 }
-
 
 /* --- Activity disconnect ---------------------------------------------- */
 
@@ -180,7 +175,6 @@ rs_disconnect(or_camera_pipe **pipe, bool *started,
     return realsense_ether;
 }
 
-
 /* --- Activity list_devices -------------------------------------------- */
 
 /** Codel list_devices of activity list_devices.
@@ -195,11 +189,11 @@ list_devices(const or_camera_pipe *pipe, sequence_string *serial,
     rs2::context ctx;
     rs2::device_list devices = ctx.query_devices();
 
-    (void) genom_sequence_reserve(serial, devices.size());
+    (void)genom_sequence_reserve(serial, devices.size());
     serial->_length = devices.size();
 
     warnx("%s", "list of devices:");
-    for (uint16_t i = 0; i<devices.size(); i++)
+    for (uint16_t i = 0; i < devices.size(); i++)
     {
         std::string name = "Unknown Device";
         if (devices[i].supports(RS2_CAMERA_INFO_NAME))
@@ -209,12 +203,11 @@ list_devices(const or_camera_pipe *pipe, sequence_string *serial,
             sn = devices[i].get_info(RS2_CAMERA_INFO_SERIAL_NUMBER);
         warnx("%s: #%s", name.c_str(), sn.c_str());
         serial->_buffer[i] = new char();
-        snprintf(serial->_buffer[i], sizeof(char)*sn.length(), "%s", sn.c_str());
+        snprintf(serial->_buffer[i], sizeof(char) * sn.length(), "%s", sn.c_str());
     }
 
     return realsense_ether;
 }
-
 
 /* --- Activity set_extrinsics ------------------------------------------ */
 

@@ -32,9 +32,7 @@
 #include <chrono>
 #include <cmath>
 
-
 /* --- Task visual ------------------------------------------------------ */
-
 
 /** Codel rs_viz_start of task visual.
  *
@@ -56,10 +54,10 @@ rs_viz_start(const realsense_frame *frame, realsense_undist_s **undist,
     frame->open("FE_r", self);
     frame->open("FE_r/jpeg", self);
 
-    (void) genom_sequence_reserve(&(frame->data("FE_l", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("FE_l/jpeg", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("FE_r", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("FE_r/jpeg", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("FE_l", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("FE_l/jpeg", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("FE_r", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("FE_r/jpeg", self)->pixels), 0);
 
     frame->open("color", self);
     frame->open("color/jpeg", self);
@@ -68,16 +66,15 @@ rs_viz_start(const realsense_frame *frame, realsense_undist_s **undist,
     frame->open("IR_r", self);
     frame->open("IR_r/jpeg", self);
 
-    (void) genom_sequence_reserve(&(frame->data("color", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("color/jpeg", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_l", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_l/jpeg", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_r", self)->pixels), 0);
-    (void) genom_sequence_reserve(&(frame->data("IR_r/jpeg", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("color", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("color/jpeg", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("IR_l", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("IR_l/jpeg", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("IR_r", self)->pixels), 0);
+    (void)genom_sequence_reserve(&(frame->data("IR_r/jpeg", self)->pixels), 0);
 
     return realsense_sleep;
 }
-
 
 /** Codel rs_viz_sleep of task visual.
  *
@@ -92,7 +89,6 @@ rs_viz_sleep(bool started, const genom_context self)
     else
         return realsense_poll;
 }
-
 
 /** Codel rs_viz_poll of task visual.
  *
@@ -125,7 +121,6 @@ rs_viz_poll(realsense_sync_s **v_sync, or_camera_data **v_data,
     return realsense_main;
 }
 
-
 /** Codel rs_viz_main of task visual.
  *
  * Triggered by realsense_main.
@@ -157,7 +152,7 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
         if (type == RS2_STREAM_INFRARED && i == 1)
             port_name = "IR_r";
 
-        const void* pixel_data;
+        const void *pixel_data;
         uint16_t w, h, bpp;
         // Undistort if requested
         if (undist->enabled && type == RS2_STREAM_FISHEYE)
@@ -165,9 +160,8 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
             Mat cvframe = Mat(
                 Size(fv.get_width(), fv.get_height()),
                 CV_8UC1,
-                (void*) f.get_data(),
-                Mat::AUTO_STEP
-            );
+                (void *)f.get_data(),
+                Mat::AUTO_STEP);
 
             remap(cvframe, cvframe, undist->m1, undist->m2, INTER_LINEAR);
 
@@ -185,18 +179,17 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
         }
 
         // Update port data lenght and reallocate if need be
-        or_sensor_frame* port_raw_data = frame->data(port_name.c_str(), self);
-        if (h*w*bpp != port_raw_data->pixels._length)
+        or_sensor_frame *port_raw_data = frame->data(port_name.c_str(), self);
+        if (h * w * bpp != port_raw_data->pixels._length)
         {
-            if (h*w*bpp > port_raw_data->pixels._maximum
-                && genom_sequence_reserve(&(port_raw_data->pixels), h*w*bpp)  == -1)
+            if (h * w * bpp > port_raw_data->pixels._maximum && genom_sequence_reserve(&(port_raw_data->pixels), h * w * bpp) == -1)
             {
                 realsense_e_mem_detail d;
                 snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
                 warnx("%s", d.what);
-                return realsense_e_mem(&d,self);
+                return realsense_e_mem(&d, self);
             }
-            port_raw_data->pixels._length = h*w*bpp;
+            port_raw_data->pixels._length = h * w * bpp;
             port_raw_data->height = h;
             port_raw_data->width = w;
             port_raw_data->bpp = bpp;
@@ -206,12 +199,12 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
         // Copy data on port, update timestamp and write
         memcpy(port_raw_data->pixels._buffer, pixel_data, port_raw_data->pixels._length);
         double ms = fv.get_timestamp();
-        port_raw_data->ts.sec = floor(ms/1000);
-        port_raw_data->ts.nsec = (ms - (double)port_raw_data->ts.sec*1000) * 1e6;
+        port_raw_data->ts.sec = floor(ms / 1000);
+        port_raw_data->ts.nsec = (ms - (double)port_raw_data->ts.sec * 1000) * 1e6;
 
         frame->write(port_name.c_str(), self);
 
-        //compress image if requested
+        // compress image if requested
         if (compression_rate != -1)
         {
             std::vector<int32_t> compression_params;
@@ -222,22 +215,21 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
                 Size(w, h),
                 CV_8UC1,
                 port_raw_data->pixels._buffer,
-                Mat::AUTO_STEP
-            );
+                Mat::AUTO_STEP);
             std::vector<uint8_t> buf;
             imencode(".jpg", cvframe, buf, compression_params);
 
             // Update port data lenght and reallocate if need be
-            or_sensor_frame* port_jpeg_data = frame->data((port_name + "/jpeg").c_str(), self);
+            or_sensor_frame *port_jpeg_data = frame->data((port_name + "/jpeg").c_str(), self);
             if (buf.size() != port_jpeg_data->pixels._length)
             {
                 if (buf.size() > port_jpeg_data->pixels._maximum &&
-                    genom_sequence_reserve(&(port_jpeg_data->pixels), buf.size())  == -1)
+                    genom_sequence_reserve(&(port_jpeg_data->pixels), buf.size()) == -1)
                 {
                     realsense_e_mem_detail d;
                     snprintf(d.what, sizeof(d.what), "unable to allocate frame memory");
                     warnx("%s", d.what);
-                    return realsense_e_mem(&d,self);
+                    return realsense_e_mem(&d, self);
                 }
                 port_jpeg_data->pixels._length = buf.size();
                 port_jpeg_data->height = h;
@@ -259,7 +251,6 @@ rs_viz_main(int16_t compression_rate, const or_camera_data *v_data,
     return realsense_sleep;
 }
 
-
 /* --- Activity set_undistortion ---------------------------------------- */
 
 /** Codel rs_set_undistort of activity set_undistortion.
@@ -275,16 +266,16 @@ rs_set_undistort(uint16_t size, float fov, const or_camera_pipe *pipe,
                  const genom_context self)
 {
     // check if either COLOR or FISHEYE is enabled, cannot compute undistortion map without initial calibration
-    rs2_intrinsics* intr = &pipe->cam->_intr;
+    rs2_intrinsics *intr = &pipe->cam->_intr;
     if (intr->width == 0)
     {
         realsense_e_io_detail d;
         snprintf(d.what, sizeof(d.what), "fisheye stream not enabled, cannot compute undistortion map");
         warnx("%s", d.what);
-        return realsense_e_io(&d,self);
+        return realsense_e_io(&d, self);
     }
 
-    or_sensor_intrinsics* intr_data = intrinsics->data(self);
+    or_sensor_intrinsics *intr_data = intrinsics->data(self);
 
     if (size == 0)
     {
@@ -313,35 +304,43 @@ rs_set_undistort(uint16_t size, float fov, const or_camera_pipe *pipe,
     {
         // Get current calibration
         Mat K = Mat::zeros(3, 3, CV_32F);
-        K.at<float>(0,0) = intr->fx;
-        K.at<float>(1,1) = intr->fy;
-        K.at<float>(0,2) = intr->ppx;
-        K.at<float>(1,2) = intr->ppy;
-        K.at<float>(0,1) = 0;
-        K.at<float>(2,2) = 1;
-        Mat D = (Mat_<float>(4,1) <<
-            intr->coeffs[0],
-            intr->coeffs[1],
-            intr->coeffs[2],
-            intr->coeffs[3]
-        );
+        K.at<float>(0, 0) = intr->fx;
+        K.at<float>(1, 1) = intr->fy;
+        K.at<float>(0, 2) = intr->ppx;
+        K.at<float>(1, 2) = intr->ppy;
+        K.at<float>(0, 1) = 0;
+        K.at<float>(2, 2) = 1;
+        Mat D = (Mat_<float>(4, 1) << intr->coeffs[0],
+                 intr->coeffs[1],
+                 intr->coeffs[2],
+                 intr->coeffs[3]);
 
         // Compute desired calibration
-        float f_px = size/2 /tan(fov/2);
-        float c = size/2;
-        Mat P = (Mat_<float>(3,3) <<
-            f_px,    0, c,
-               0, f_px, c,
-               0,    0, 1
-        );
+        float f_px = size / 2 / tan(fov / 2);
+        float c = size / 2;
+        Mat P = (Mat_<float>(3, 3) << f_px, 0, c,
+                 0, f_px, c,
+                 0, 0, 1);
 
         // Compute undistortion maps
-        fisheye::initUndistortRectifyMap(K, D, Mat::eye(3,3, CV_32F), P, Size(size,size), CV_16SC2, (*undist)->m1, (*undist)->m2);
+        fisheye::initUndistortRectifyMap(K, D, Mat::eye(3, 3, CV_32F), P, Size(size, size), CV_16SC2, (*undist)->m1, (*undist)->m2);
 
         // Publish intrinsincs with 'fake distortion' (=0) since the image is undistorted before publishing
         *intr_data = {
-            .calib = { f_px, f_px, c, c, 0, },
-            .disto = { 0, 0, 0, 0, 0, },
+            .calib = {
+                f_px,
+                f_px,
+                c,
+                c,
+                0,
+            },
+            .disto = {
+                0,
+                0,
+                0,
+                0,
+                0,
+            },
         };
         intrinsics->write(self);
 
