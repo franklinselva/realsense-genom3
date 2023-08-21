@@ -20,6 +20,8 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *                                             Martin Jacquet - September 2022
+ *
+ * Modified by: Selvakumar H S - August 2023
  */
 /* ---- Includes ---------------------------------------------------------- */
 #pragma require "openrobots2-idl >= 2.0"
@@ -35,7 +37,7 @@ component realsense {
     email		"martin.jacquet@laas.fr";
     lang		"c";
     require	    "genom3 >= 2.99.26";
-    codels-require	"realsense2", "opencv";
+    codels-require	"realsense2", "opencv4";
 
     /* ---- Interfaces ---------------------------------------------------- */
     provides or_camera;
@@ -144,31 +146,32 @@ component realsense {
     };
 
     /* ---- Hardware connection ------------------------------------------- */
-    activity connect(in string<32> serial = : "Serial number of the device") {
+    activity connect_d435(in string<32> serial = : "Serial number of the device") {
         task main;
         throw e_rs, e_io;
+        after setup_stream_d435;
 
         codel<start> rs_connect(in serial, out pipe, out info.started, out intrinsics)
             yield ether;
     };
 
-    activity disconnect() {
+    activity disconnect_d435() {
         task main;
         throw e_rs;
-        after connect;
+        after connect_d435;
 
         codel<start> rs_disconnect(out pipe, out info.started)
             yield ether;
     };
 
-    function enable_streams_t265(in boolean fisheye = FALSE,
+    function setup_stream_t265(in boolean fisheye = FALSE,
                                  in boolean odometry = FALSE,
                                  in boolean accelerometer = FALSE,
                                  in boolean gyroscope = FALSE) {
         codel enable_streams_t265(in fisheye, in odometry, in accelerometer, in gyroscope, inout pipe);
     };
 
-    function enable_streams_d435(in boolean color = FALSE,
+    function setup_stream_d435(in boolean color = FALSE,
                                  in boolean depth = FALSE,
                                  in boolean infrared = FALSE,
                                  in boolean accelerometer = FALSE,

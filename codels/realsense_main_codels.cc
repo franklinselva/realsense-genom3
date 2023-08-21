@@ -66,9 +66,10 @@ rs_start(realsense_ids *ids, const realsense_extrinsics *extrinsics,
     return realsense_ether;
 }
 
-/* --- Activity connect ------------------------------------------------- */
 
-/** Codel rs_connect of activity connect.
+/* --- Activity connect_d435 -------------------------------------------- */
+
+/** Codel rs_connect of activity connect_d435.
  *
  * Triggered by realsense_start.
  * Yields to realsense_ether.
@@ -156,9 +157,10 @@ rs_connect(const char serial[32], or_camera_pipe **pipe, bool *started,
     return realsense_ether;
 }
 
-/* --- Activity disconnect ---------------------------------------------- */
 
-/** Codel rs_disconnect of activity disconnect.
+/* --- Activity disconnect_d435 ----------------------------------------- */
+
+/** Codel rs_disconnect of activity disconnect_d435.
  *
  * Triggered by realsense_start.
  * Yields to realsense_ether.

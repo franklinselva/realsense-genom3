@@ -316,8 +316,8 @@ a|.Data structure
 
 == Services
 
-[[connect]]
-=== connect (activity)
+[[connect_d435]]
+=== connect_d435 (activity)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
@@ -341,8 +341,8 @@ a|.Context
 
 '''
 
-[[disconnect]]
-=== disconnect (activity)
+[[disconnect_d435]]
+=== disconnect_d435 (activity)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
@@ -358,8 +358,8 @@ a|.Context
 
 '''
 
-[[enable_streams_t265]]
-=== enable_streams_t265 (function)
+[[setup_stream_t265]]
+=== setup_stream_t265 (function)
 
 [role="small", width="50%", float="right", cols="1"]
 |===
@@ -377,8 +377,8 @@ a|.Inputs
 
 '''
 
-[[enable_streams_d435]]
-=== enable_streams_d435 (function)
+[[setup_stream_d435]]
+=== setup_stream_d435 (function)
 
 [role="small", width="50%", float="right", cols="1"]
 |===

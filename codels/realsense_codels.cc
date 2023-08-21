@@ -137,9 +137,9 @@ set_size(const or_camera_info_size_s *size, const genom_context self)
     }
 }
 
-/* --- Function enable_streams_t265 ------------------------------------- */
+/* --- Function setup_stream_t265 --------------------------------------- */
 
-/** Codel enable_streams_t265 of function enable_streams_t265.
+/** Codel enable_streams_t265 of function setup_stream_t265.
  *
  * Returns genom_ok.
  */
@@ -173,9 +173,9 @@ enable_streams_t265(bool fisheye, bool odometry, bool accelerometer,
     return genom_ok;
 }
 
-/* --- Function enable_streams_d435 ------------------------------------- */
+/* --- Function setup_stream_d435 --------------------------------------- */
 
-/** Codel enable_streams_d435 of function enable_streams_d435.
+/** Codel enable_streams_d435 of function setup_stream_d435.
  *
  * Returns genom_ok.
  */
