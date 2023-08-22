@@ -21,6 +21,8 @@
 #
 #                                             Martin Jacquet - September 2022
 #
+# Modified by: Selvakumar H S - August 2023
+#
 
 lib_LTLIBRARIES = librealsense_codels.la
 

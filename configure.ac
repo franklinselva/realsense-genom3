@@ -23,6 +23,8 @@ dnl IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl                                             Martin Jacquet - September 2022
 dnl
+dnl Modified by: Selvakumar H S - August 2023
+dnl
 
 AC_PREREQ(2.59)
 

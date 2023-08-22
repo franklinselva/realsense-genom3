@@ -20,6 +20,8 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *                                             Martin Jacquet - September 2022
+ *
+ * Modified by: Selvakumar H S - August 2023
  */
 
 #include "acrealsense.h"
@@ -120,7 +122,7 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
 
     // // Map pc to color frame for registration
     // if (registration)
-    //     rs_pc.map_to(rgb);
+        //     rs_pc.map_to(rgb);
 
     // Get points and texture from frame
     rs2::points points = rs_pc.calculate(f);
@@ -142,20 +144,20 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
                 // if (registration && genom_sequence_reserve(&(port_data->colors._value), points.size())  == -1)
                 // {
                 //         realsense_e_mem_detail d;
-                //         snprintf(d.what, sizeof(d.what), "unable to allocate point color memory");
-                //         return realsense_e_mem(&d,self);
+                        //         snprintf(d.what, sizeof(d.what), "unable to allocate point color memory");
+                        //         return realsense_e_mem(&d,self);
                 // }
                 // else
-                //     (void) genom_sequence_reserve(&(port_data->colors._value), 0);
+                    //     (void) genom_sequence_reserve(&(port_data->colors._value), 0);
             }
             port_data->points._length = points.size();
             // if (registration)
             // {
             //     port_data->colors._present = true;
-            //     port_data->colors._value._length = points.size();
+                //     port_data->colors._value._length = points.size();
             // }
             // else
-            //     port_data->colors._present = false;
+                //     port_data->colors._present = false;
         }
 
         // Copy data on port, update timestamp and write
@@ -168,8 +170,8 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
         // if (registration)
         // {
         //     w = rgb.as<rs2::video_frame>().get_width();
-        //     bpp = rgb.as<rs2::video_frame>().get_bytes_per_pixel();
-        //     color_data = (const uint8_t*) rgb.get_data();
+            //     bpp = rgb.as<rs2::video_frame>().get_bytes_per_pixel();
+            //     color_data = (const uint8_t*) rgb.get_data();
         // }
         for (uint32_t i = 0; i < points.size(); i++)
         {
@@ -180,12 +182,12 @@ rs_depth_main(const or_camera_data *d_data, bool registration,
             // if (registration)
             // {
             //     x = static_cast<uint32_t>(text_coords[i].u * w);
-            //     y = static_cast<uint32_t>(text_coords[i].v * w);
-            //     p = (y * w + x) * bpp;
-            //     memcpy(&port_data->colors._value._buffer[i], &color_data[p], bpp);
-            //     // port_data->colors._value._buffer[i].r = color_data[p];
-            //     // port_data->colors._value._buffer[i].g = color_data[p+1];
-            //     // port_data->colors._value._buffer[i].b = color_data[p+2];
+                //     y = static_cast<uint32_t>(text_coords[i].v * w);
+                //     p = (y * w + x) * bpp;
+                //     memcpy(&port_data->colors._value._buffer[i], &color_data[p], bpp);
+                //     // port_data->colors._value._buffer[i].r = color_data[p];
+                //     // port_data->colors._value._buffer[i].g = color_data[p+1];
+                //     // port_data->colors._value._buffer[i].b = color_data[p+2];
             // }
         }
 

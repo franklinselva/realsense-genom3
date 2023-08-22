@@ -20,6 +20,8 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  *                                             Martin Jacquet - September 2022
+ *
+ * Modified by: Selvakumar H S - August 2023
  */
 
 #include "acrealsense.h"

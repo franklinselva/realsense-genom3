@@ -6,21 +6,23 @@ import os
 LIB_PATH = os.environ.get("DRONE_VV_PATH")
 MODULE_PATH = os.path.join(LIB_PATH, "lib/genom/pocolibs/plugins/realsense.so")
 
-handle = genomix.connect('localhost:8080')
+handle = genomix.connect("localhost:8080")
 
 camera = handle.load(MODULE_PATH)
 
 # Setup streaming
-camera.setup_stream_d435(color=True, depth=True, infrared=True, accelerometer=True, gyroscope=True)
+camera.setup_stream_d435(
+    color=True, depth=True, infrared=True, accelerometer=False, gyroscope=False
+)
 
 # Connect the camera
 # This will connect the camera and start streaming
-camera.connect_d435("832112070817") # Serial number of the camera
+camera.connect_d435("832112070817")  # Serial number of the camera
 
 # Camera Configurations
 camera.set_format(format="RGB8")
 camera.set_fps(frequency=30)
-camera.set_size(size={"width": 640, "height": 480})
+camera.set_size(size={"w": 640, "h": 480})
 
 # Pointcloud configurations
 camera.set_registration(True)
@@ -42,5 +44,5 @@ extrinsics = camera.extrinsics()
 pointcloud = camera.pc("depth")
 
 # To get acceleration and gyroscope data
-accelerometer = camera.accel()
-gyroscope = camera.gyro()
+# accelerometer = camera.accel()
+# gyroscope = camera.gyro()
